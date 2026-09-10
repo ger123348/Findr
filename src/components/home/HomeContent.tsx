@@ -3,8 +3,12 @@
 import { motion } from 'framer-motion';
 import { DropZone } from '@/components/upload/DropZone';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
+import { useThemeStore } from '@/store/themeStore';
 
 export function HomeContent() {
+  const theme = useThemeStore((s) => s.theme);
+  const logoSrc = theme === 'dark' ? '/logo-dark.svg' : '/logo-light.svg';
+
   return (
     <main className="min-h-screen flex flex-col relative overflow-hidden bg-[#F5F5F7] dark:bg-[#0A0A0F] transition-colors duration-500">
       {/* Ambient Background Orbs */}
@@ -22,7 +26,7 @@ export function HomeContent() {
             animate={{ opacity: 1, x: 0 }}
             className="flex items-center gap-2.5"
           >
-            <img src="/logo.svg" alt="Findr Logo" className="h-8 w-8 object-contain drop-shadow-md" />
+            <img src={logoSrc} alt="Findr Logo" className="h-8 w-8 object-contain drop-shadow-md" />
             <span className="font-bold text-gray-900 dark:text-white tracking-tight text-lg">Findr</span>
           </motion.div>
           <motion.div
