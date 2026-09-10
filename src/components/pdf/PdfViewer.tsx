@@ -1,19 +1,16 @@
 'use client';
 
-import {
-  useEffect,
-  useRef,
-  useState,
-  useCallback,
-  forwardRef,
-  useImperativeHandle,
-} from 'react';
+import { useState, useRef, forwardRef, useImperativeHandle, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut, Layers } from 'lucide-react';
+import { Document, Page, pdfjs } from 'react-pdf';
+import 'react-pdf/dist/Page/AnnotationLayer.css';
+import 'react-pdf/dist/Page/TextLayer.css';
 import { Spinner } from '@/components/ui/Spinner';
-import { PdfSkeletonLoader } from '@/components/ui/SkeletonLoader';
 import { KeywordItem } from '@/types';
-import { highlightTextLayer, resetHighlights } from '@/lib/pdfHighlighter';
+
+// Use local worker for reliability
+pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
 interface PdfViewerProps {
   pdfUrl: string;
@@ -24,163 +21,37 @@ export interface PdfViewerHandle {
   scrollToPage: (pageNum: number) => void;
 }
 
-// ─── Single PDF Page ────────────────────────────────────────
-function PdfPage({
-  pdf,
-  pageNumber,
-  scale,
-  keywords,
-}: {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  pdf: any;
-  pageNumber: number;
-  scale: number;
-  keywords: KeywordItem[];
-}) {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const textLayerRef = useRef<HTMLDivElement>(null);
-  const [isRendering, setIsRendering] = useState(true);
-  const [hasError, setHasError] = useState(false);
-  const [textLayerReady, setTextLayerReady] = useState(false);
-  const renderTaskRef = useRef<{ cancel: () => void } | null>(null);
+// Vivid colors for highlights
+const VIVID_MAP: Record<string, string> = {
+  '#FFD6D6': 'rgba(255, 120, 120, 0.45)',
+  '#D6EAFF': 'rgba(100, 170, 255, 0.45)',
+  '#D6FFE4': 'rgba(100, 220, 140, 0.45)',
+  '#FFF3D6': 'rgba(255, 220, 60, 0.5)',
+  '#F0D6FF': 'rgba(190, 120, 255, 0.45)',
+  '#FFE6D6': 'rgba(255, 160, 100, 0.45)',
+  '#D6FDFF': 'rgba(100, 220, 235, 0.45)',
+  '#FFD6F5': 'rgba(255, 120, 210, 0.45)',
+  '#E8FFD6': 'rgba(170, 235, 100, 0.45)',
+  '#D6D6FF': 'rgba(140, 140, 255, 0.45)',
+};
 
-  const renderPage = useCallback(async () => {
-    if (!canvasRef.current || !textLayerRef.current) return;
-
-    if (renderTaskRef.current) {
-      renderTaskRef.current.cancel();
-    }
-
-    setIsRendering(true);
-    setHasError(false);
-    setTextLayerReady(false);
-
-    try {
-      const pdfjsLib = await import('pdfjs-dist');
-      pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs';
-
-      const page = await pdf.getPage(pageNumber);
-      const viewport = page.getViewport({ scale });
-
-      // Canvas
-      const canvas = canvasRef.current;
-      const context = canvas.getContext('2d');
-      if (!context) return;
-      canvas.width = viewport.width;
-      canvas.height = viewport.height;
-
-      const renderTask = page.render({ canvasContext: context, viewport });
-      renderTaskRef.current = renderTask;
-      await renderTask.promise;
-
-      // Text layer
-      const textContent = await page.getTextContent();
-      const textLayerDiv = textLayerRef.current;
-
-      if (textLayerDiv) {
-        textLayerDiv.innerHTML = '';
-        textLayerDiv.style.width = `${viewport.width}px`;
-        textLayerDiv.style.height = `${viewport.height}px`;
-
-        const { TextLayer } = await import('pdfjs-dist');
-        const textLayer = new TextLayer({
-          textContentSource: textContent,
-          container: textLayerDiv,
-          viewport,
-        });
-
-        await textLayer.render();
-        setTextLayerReady(true);
-      }
-
-      setIsRendering(false);
-    } catch (err: unknown) {
-      if (err instanceof Error && err.name === 'RenderingCancelledException') return;
-      console.error(`Page ${pageNumber} error:`, err);
-      setHasError(true);
-      setIsRendering(false);
-    }
-  }, [pdf, pageNumber, scale]);
-
-  useEffect(() => {
-    renderPage();
-    return () => {
-      if (renderTaskRef.current) renderTaskRef.current.cancel();
-    };
-  }, [renderPage]);
-
-  // Apply highlights when text layer is ready or keywords change
-  useEffect(() => {
-    if (!textLayerReady || !textLayerRef.current) return;
-    highlightTextLayer(textLayerRef.current, keywords);
-  }, [keywords, textLayerReady]);
-
-  return (
-    <div className="relative shadow-lg rounded-xl sm:rounded-2xl overflow-hidden bg-white">
-      {/* Page badge */}
-      <div className="absolute top-3 left-3 z-30 bg-black/50 text-white text-[10px] font-bold px-2.5 py-1 rounded-full backdrop-blur-sm tabular-nums">
-        {pageNumber}
-      </div>
-
-      {isRendering && (
-        <div className="absolute inset-0 z-20 flex items-center justify-center bg-white/80 backdrop-blur-sm">
-          <Spinner size={28} className="text-gray-400" />
-        </div>
-      )}
-
-      {hasError && (
-        <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-red-50 text-red-400 gap-2">
-          <span className="text-2xl">⚠️</span>
-          <span className="text-sm font-medium">Halaman gagal dimuat</span>
-        </div>
-      )}
-
-      {/* Canvas */}
-      <canvas ref={canvasRef} className="block w-full h-auto" />
-
-      {/* Text layer — sits on top of canvas, transparent text allows selection + background colors show highlights */}
-      <div
-        ref={textLayerRef}
-        className="textLayer absolute top-0 left-0 z-10"
-      />
-    </div>
-  );
+function getHighlightColor(keyword: KeywordItem): string {
+  return VIVID_MAP[keyword.color] || 'rgba(255, 255, 0, 0.5)';
 }
 
-// ─── Viewer Container ───────────────────────────────────────
+function escapeRegex(text: string): string {
+  return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 export const PdfViewer = forwardRef<PdfViewerHandle, PdfViewerProps>(function PdfViewer({ pdfUrl, keywords }, ref) {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [pdf, setPdf] = useState<any>(null);
-  const [totalPages, setTotalPages] = useState(0);
+  const [totalPages, setTotalPages] = useState<number>(0);
   const [scale, setScale] = useState(1.3);
   const [currentPage, setCurrentPage] = useState(1);
-  const [isLoading, setIsLoading] = useState(true);
-  const [loadError, setLoadError] = useState<string | null>(null);
   const pageRefs = useRef<Map<number, HTMLDivElement>>(new Map());
 
-  useEffect(() => {
-    let cancelled = false;
-    async function loadPdf() {
-      setIsLoading(true);
-      setLoadError(null);
-      try {
-        const pdfjsLib = await import('pdfjs-dist');
-        pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs';
-        const loadingTask = pdfjsLib.getDocument({ url: pdfUrl, withCredentials: false });
-        const pdfDoc = await loadingTask.promise;
-        if (!cancelled) {
-          setPdf(pdfDoc);
-          setTotalPages(pdfDoc.numPages);
-        }
-      } catch (err) {
-        if (!cancelled) setLoadError(err instanceof Error ? err.message : 'Gagal memuat PDF.');
-      } finally {
-        if (!cancelled) setIsLoading(false);
-      }
-    }
-    loadPdf();
-    return () => { cancelled = true; };
-  }, [pdfUrl]);
+  const onDocumentLoadSuccess = ({ numPages }: { numPages: number }) => {
+    setTotalPages(numPages);
+  };
 
   const handleZoomIn = () => setScale((s) => Math.min(s + 0.2, 3.0));
   const handleZoomOut = () => setScale((s) => Math.max(s - 0.2, 0.5));
@@ -193,17 +64,47 @@ export const PdfViewer = forwardRef<PdfViewerHandle, PdfViewerProps>(function Pd
 
   useImperativeHandle(ref, () => ({ scrollToPage }));
 
-  if (loadError) {
-    return (
-      <div className="flex h-full items-center justify-center text-red-500 dark:text-red-400 flex-col gap-3">
-        <span className="text-3xl">⚠️</span>
-        <p className="text-sm font-medium">{loadError}</p>
-      </div>
-    );
-  }
+  // Custom text renderer to inject <mark> natively in react-pdf
+  const textRenderer = useCallback(
+    (textItem: { str: string; itemIndex: number }) => {
+      const text = textItem.str;
+      if (!text || keywords.length === 0) return text;
+
+      // Create a combined regex for all keywords
+      const patterns = keywords.map(k => escapeRegex(k.text)).join('|');
+      const regex = new RegExp(`(${patterns})`, 'gi');
+
+      const parts = text.split(regex);
+
+      // Map segments back to React elements
+      return parts.map((part, index) => {
+        // Find if this part matches any keyword
+        const matchedKw = keywords.find(k => k.text.toLowerCase() === part.toLowerCase());
+        
+        if (matchedKw) {
+          const color = getHighlightColor(matchedKw);
+          return (
+            <mark
+              key={index}
+              style={{
+                backgroundColor: color,
+                color: 'transparent',
+                borderRadius: '2px',
+                padding: '0 1px'
+              }}
+            >
+              {part}
+            </mark>
+          );
+        }
+        return part;
+      });
+    },
+    [keywords]
+  );
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full bg-gray-100 dark:bg-gray-900">
       {/* Toolbar */}
       <div className="flex items-center justify-between px-3 sm:px-4 py-2.5 bg-white/60 dark:bg-white/5 backdrop-blur-md border-b border-gray-200/30 dark:border-white/5 rounded-t-2xl sm:rounded-t-3xl sticky top-0 z-30 shrink-0">
         <div className="flex items-center gap-2 text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400">
@@ -214,42 +115,63 @@ export const PdfViewer = forwardRef<PdfViewerHandle, PdfViewerProps>(function Pd
         </div>
 
         <div className="flex items-center gap-0.5 sm:gap-1">
-          <button onClick={() => scrollToPage(Math.max(1, currentPage - 1))} disabled={currentPage <= 1 || isLoading} className="p-1.5 sm:p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-white/10 disabled:opacity-30 transition-colors" aria-label="Prev">
+          <button onClick={() => scrollToPage(Math.max(1, currentPage - 1))} disabled={currentPage <= 1 || totalPages === 0} className="p-1.5 sm:p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-white/10 disabled:opacity-30 transition-colors">
             <ChevronLeft size={16} className="text-gray-600 dark:text-gray-300" />
           </button>
-          <button onClick={() => scrollToPage(Math.min(totalPages, currentPage + 1))} disabled={currentPage >= totalPages || isLoading} className="p-1.5 sm:p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-white/10 disabled:opacity-30 transition-colors" aria-label="Next">
+          <button onClick={() => scrollToPage(Math.min(totalPages, currentPage + 1))} disabled={currentPage >= totalPages || totalPages === 0} className="p-1.5 sm:p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-white/10 disabled:opacity-30 transition-colors">
             <ChevronRight size={16} className="text-gray-600 dark:text-gray-300" />
           </button>
           <div className="w-px h-5 bg-gray-200/50 dark:bg-white/10 mx-1 hidden sm:block" />
-          <button onClick={handleZoomOut} className="p-1.5 sm:p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-white/10 transition-colors hidden sm:flex" aria-label="Zoom out">
+          <button onClick={handleZoomOut} className="p-1.5 sm:p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-white/10 transition-colors hidden sm:flex">
             <ZoomOut size={16} className="text-gray-600 dark:text-gray-300" />
           </button>
           <span className="text-xs font-bold text-gray-500 dark:text-gray-400 w-12 text-center tabular-nums hidden sm:block">
             {Math.round(scale * 100)}%
           </span>
-          <button onClick={handleZoomIn} className="p-1.5 sm:p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-white/10 transition-colors hidden sm:flex" aria-label="Zoom in">
+          <button onClick={handleZoomIn} className="p-1.5 sm:p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-white/10 transition-colors hidden sm:flex">
             <ZoomIn size={16} className="text-gray-600 dark:text-gray-300" />
           </button>
         </div>
       </div>
 
-      {/* Pages */}
-      <div className="flex-1 overflow-y-auto bg-gray-100/50 dark:bg-black/20 p-3 sm:p-4 space-y-4 rounded-b-2xl sm:rounded-b-3xl">
-        {isLoading ? (
-          <PdfSkeletonLoader pages={3} />
-        ) : (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.4 }} className="space-y-4">
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
-              <div
-                key={pageNum}
-                ref={(el) => { if (el) pageRefs.current.set(pageNum, el); }}
-                onMouseEnter={() => setCurrentPage(pageNum)}
-              >
-                <PdfPage pdf={pdf} pageNumber={pageNum} scale={scale} keywords={keywords} />
+      {/* Pages Container */}
+      <div className="flex-1 overflow-y-auto p-4 space-y-4 flex flex-col items-center">
+        <Document
+          file={pdfUrl}
+          onLoadSuccess={onDocumentLoadSuccess}
+          loading={
+            <div className="flex items-center justify-center p-10">
+              <Spinner size={32} className="text-gray-400" />
+            </div>
+          }
+          error={
+            <div className="flex flex-col items-center text-red-500 gap-2 p-10">
+              <span className="text-3xl">⚠️</span>
+              <span>Gagal memuat PDF</span>
+            </div>
+          }
+        >
+          {Array.from(new Array(totalPages), (el, index) => (
+            <div
+              key={`page_${index + 1}`}
+              ref={(elem) => { if (elem) pageRefs.current.set(index + 1, elem); }}
+              onMouseEnter={() => setCurrentPage(index + 1)}
+              className="mb-4 shadow-lg bg-white relative"
+            >
+              <Page
+                pageNumber={index + 1}
+                scale={scale}
+                renderAnnotationLayer={false}
+                renderTextLayer={true}
+                // @ts-expect-error - react-pdf allows returning React nodes at runtime despite the string type definition
+                customTextRenderer={textRenderer}
+              />
+              <div className="absolute top-2 left-2 bg-black/50 text-white text-[10px] px-2 py-0.5 rounded-full z-50 pointer-events-none">
+                {index + 1}
               </div>
-            ))}
-          </motion.div>
-        )}
+            </div>
+          ))}
+        </Document>
       </div>
     </div>
   );
