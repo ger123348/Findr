@@ -1,5 +1,9 @@
 import { KeywordItem } from '@/types';
 
+function escapeRegex(text: string): string {
+  return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 // Vivid stabilo colors (semi-transparent for overlay effect)
 const VIVID_MAP: Record<string, string> = {
   '#FFD6D6': 'rgba(255, 120, 120, 0.45)',
@@ -18,104 +22,38 @@ function getHighlightColor(keyword: KeywordItem): string {
   return VIVID_MAP[keyword.color] || 'rgba(255, 255, 0, 0.5)';
 }
 
-function escapeRegex(text: string): string {
-  return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-}
-
 /**
- * Highlights keywords directly on the PDF.js text layer spans.
- * 
- * Strategy:
- * 1. Collect all spans and their text
- * 2. Concatenate into one string, tracking span boundaries
- * 3. Find keyword matches in the full string
- * 4. Map matches back to spans — color the entire span that overlaps a match
- * 
- * This handles cross-span keywords properly.
+ * Highlights keywords by replacing text inside spans with <mark> tags.
  */
 export function highlightTextLayer(
   textLayerDiv: HTMLElement,
   keywords: KeywordItem[]
 ): void {
-  // Reset first
   resetHighlights(textLayerDiv);
   if (keywords.length === 0) return;
 
   const spans = Array.from(textLayerDiv.querySelectorAll('span'));
-  if (spans.length === 0) return;
-
-  // Build span text map with character offset tracking
-  interface SpanInfo {
-    span: HTMLSpanElement;
-    text: string;
-    globalStart: number;
-    globalEnd: number;
-  }
-
-  let fullText = '';
-  const spanInfos: SpanInfo[] = [];
 
   spans.forEach((span) => {
-    const text = span.textContent || '';
-    spanInfos.push({
-      span,
-      text,
-      globalStart: fullText.length,
-      globalEnd: fullText.length + text.length,
-    });
-    fullText += text;
-  });
+    let html = span.textContent || '';
+    let hasMatch = false;
 
-  // Find all keyword matches in the concatenated text
-  interface MatchResult {
-    start: number;
-    end: number;
-    keyword: KeywordItem;
-  }
-
-  const allMatches: MatchResult[] = [];
-
-  keywords.forEach((kw) => {
-    const escaped = escapeRegex(kw.text);
-    const regex = new RegExp(escaped, 'gi');
-    let match;
-    while ((match = regex.exec(fullText)) !== null) {
-      allMatches.push({
-        start: match.index,
-        end: match.index + match[0].length,
-        keyword: kw,
-      });
-    }
-  });
-
-  // Sort by position, remove overlaps
-  allMatches.sort((a, b) => a.start - b.start);
-  const filtered: MatchResult[] = [];
-  let lastEnd = 0;
-  for (const m of allMatches) {
-    if (m.start >= lastEnd) {
-      filtered.push(m);
-      lastEnd = m.end;
-    }
-  }
-
-  // Map matches to spans and apply highlight
-  filtered.forEach((match) => {
-    const color = getHighlightColor(match.keyword);
-
-    spanInfos.forEach((info) => {
-      // Check if this span overlaps with the match
-      const overlapStart = Math.max(match.start, info.globalStart);
-      const overlapEnd = Math.min(match.end, info.globalEnd);
-
-      if (overlapStart < overlapEnd) {
-        // This span contains part of the match — highlight it
-        info.span.style.backgroundColor = color;
-        info.span.style.borderRadius = '2px';
-        info.span.dataset.highlighted = 'true';
-        info.span.dataset.keywordId = match.keyword.id;
+    keywords.forEach((kw) => {
+      const escaped = escapeRegex(kw.text);
+      const regex = new RegExp(`(${escaped})`, 'gi');
+      if (regex.test(html)) {
+        hasMatch = true;
+        const color = getHighlightColor(kw);
+        html = html.replace(
+          regex,
+          `<mark class="findr-highlight" data-keyword-id="${kw.id}" style="background-color: ${color} !important; border-radius: 2px !important; color: transparent !important; display: inline-block !important;">$1</mark>`
+        );
       }
     });
+
+    if (hasMatch) {
+      span.innerHTML = html;
+    }
   });
 }
 
@@ -123,12 +61,13 @@ export function highlightTextLayer(
  * Removes all highlights from the text layer.
  */
 export function resetHighlights(textLayerDiv: HTMLElement): void {
-  const spans = textLayerDiv.querySelectorAll('span[data-highlighted="true"]');
-  spans.forEach((span) => {
-    (span as HTMLElement).style.backgroundColor = '';
-    (span as HTMLElement).style.borderRadius = '';
-    delete (span as HTMLElement).dataset.highlighted;
-    delete (span as HTMLElement).dataset.keywordId;
+  const marks = Array.from(textLayerDiv.querySelectorAll('mark.findr-highlight'));
+  marks.forEach((mark) => {
+    const parent = mark.parentNode;
+    if (parent) {
+      parent.replaceChild(document.createTextNode(mark.textContent || ''), mark);
+      parent.normalize(); // merge adjacent text nodes
+    }
   });
 }
 
