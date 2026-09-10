@@ -5,6 +5,8 @@ import {
   useRef,
   useState,
   useCallback,
+  forwardRef,
+  useImperativeHandle,
 } from 'react';
 import { motion } from 'framer-motion';
 import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut, Layers } from 'lucide-react';
@@ -155,7 +157,11 @@ function PdfPage({
   );
 }
 
-export function PdfViewer({ pdfUrl, keywords }: PdfViewerProps) {
+export interface PdfViewerHandle {
+  scrollToPage: (pageNum: number) => void;
+}
+
+export const PdfViewer = forwardRef<PdfViewerHandle, PdfViewerProps>(function PdfViewer({ pdfUrl, keywords }, ref) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [pdf, setPdf] = useState<any>(null);
   const [totalPages, setTotalPages] = useState(0);
@@ -205,6 +211,10 @@ export function PdfViewer({ pdfUrl, keywords }: PdfViewerProps) {
     if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
     setCurrentPage(pageNum);
   };
+
+  useImperativeHandle(ref, () => ({
+    scrollToPage,
+  }));
 
   if (loadError) {
     return (
@@ -303,4 +313,4 @@ export function PdfViewer({ pdfUrl, keywords }: PdfViewerProps) {
       </div>
     </div>
   );
-}
+});

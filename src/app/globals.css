@@ -28,10 +28,12 @@
 
 /* Highlight marks injected by pdfHighlighter.ts */
 .textLayer mark.findr-highlight {
-  color: inherit;
-  border-radius: 2px;
-  padding: 0 1px;
+  color: transparent;
+  border-radius: 3px;
+  padding: 1px 2px;
   cursor: text;
+  opacity: 0.45;
+  mix-blend-mode: multiply;
 }
 
 /* ===== Custom Scrollbar ===== */

@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { FileText, Trash2, Home } from 'lucide-react';
+import { Trash2, Home } from 'lucide-react';
 import Link from 'next/link';
 import { KeywordInput } from './KeywordInput';
 import { KeywordSummary } from './KeywordSummary';
@@ -11,10 +11,11 @@ import { KeywordResult } from '@/types';
 interface SearchPanelProps {
   results: KeywordResult[];
   isTextLoading: boolean;
+  onNavigateToPage?: (pageNum: number) => void;
 }
 
-export function SearchPanel({ results, isTextLoading }: SearchPanelProps) {
-  const { documentName, keywords, clearKeywords } = useDocumentStore();
+export function SearchPanel({ results, isTextLoading, onNavigateToPage }: SearchPanelProps) {
+  const { keywords, clearKeywords } = useDocumentStore();
 
   return (
     <motion.aside
@@ -45,7 +46,7 @@ export function SearchPanel({ results, isTextLoading }: SearchPanelProps) {
 
       {/* Summary / results section */}
       {keywords.length > 0 && (
-        <KeywordSummary results={results} isLoading={isTextLoading} />
+        <KeywordSummary results={results} isLoading={isTextLoading} onNavigateToPage={onNavigateToPage} />
       )}
 
       {/* Spacer */}

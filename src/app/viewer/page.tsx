@@ -1,10 +1,10 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Search } from 'lucide-react';
-import { PdfViewer } from '@/components/pdf/PdfViewer';
+import { PdfViewer, PdfViewerHandle } from '@/components/pdf/PdfViewer';
 import { SearchPanel } from '@/components/search/SearchPanel';
 import { useDocumentStore } from '@/store/documentStore';
 import { usePdfText } from '@/hooks/usePdfText';
@@ -17,6 +17,11 @@ export default function ViewerPage() {
   const { documentUrl, documentName, keywords } = useDocumentStore();
   const theme = useThemeStore((s) => s.theme);
   const logoSrc = theme === 'dark' ? '/logo-dark.svg' : '/logo-light.svg';
+  const pdfViewerRef = useRef<PdfViewerHandle>(null);
+
+  const handleNavigateToPage = useCallback((pageNum: number) => {
+    pdfViewerRef.current?.scrollToPage(pageNum);
+  }, []);
 
   // Redirect to home if no document is loaded
   useEffect(() => {
@@ -103,12 +108,12 @@ export default function ViewerPage() {
           transition={{ duration: 0.4 }}
           className="flex-1 md:flex-[7] min-w-0 overflow-hidden rounded-2xl sm:rounded-3xl glass-card flex flex-col"
         >
-          <PdfViewer pdfUrl={documentUrl} keywords={keywords} />
+          <PdfViewer ref={pdfViewerRef} pdfUrl={documentUrl} keywords={keywords} />
         </motion.div>
 
         {/* Bottom/Right: Search Panel */}
         <div className="h-[280px] md:h-full md:flex-[3] min-w-0 md:max-w-[400px] lg:max-w-[480px] overflow-hidden shrink-0">
-          <SearchPanel results={searchResults} isTextLoading={isTextLoading} />
+          <SearchPanel results={searchResults} isTextLoading={isTextLoading} onNavigateToPage={handleNavigateToPage} />
         </div>
       </main>
     </div>
