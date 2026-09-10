@@ -16,7 +16,7 @@ export default function ViewerPage() {
   const router = useRouter();
   const { documentUrl, documentName, keywords } = useDocumentStore();
   const theme = useThemeStore((s) => s.theme);
-  const logoSrc = theme === 'dark' ? '/logo-light.svg' : '/logo-dark.svg';
+  const logoSrc = theme === 'dark' ? '/logo-dark.svg' : '/logo-light.svg';
 
   // Redirect to home if no document is loaded
   useEffect(() => {
@@ -47,7 +47,16 @@ export default function ViewerPage() {
         <div className="h-14 px-4 sm:px-6 flex items-center justify-between max-w-[1800px] mx-auto relative z-10 gap-4">
           {/* Logo & Name */}
           <div className="flex items-center gap-3 shrink-0">
-            <img src={logoSrc} alt="Findr Logo" className="h-7 w-7 sm:h-8 sm:w-8 object-contain drop-shadow-md" />
+            <img
+              src={logoSrc}
+              alt="Findr Logo"
+              className="h-7 w-7 sm:h-8 sm:w-8 object-contain rounded-full"
+              style={{
+                filter: theme === 'dark'
+                  ? 'drop-shadow(0 0 8px rgba(255,255,255,0.5)) drop-shadow(0 0 20px rgba(255,255,255,0.25))'
+                  : 'drop-shadow(0 0 8px rgba(0,0,0,0.3)) drop-shadow(0 0 20px rgba(0,0,0,0.15))',
+              }}
+            />
             <span className="font-bold text-gray-900 dark:text-white tracking-tight text-base sm:text-lg hidden xs:block">Findr</span>
           </div>
 

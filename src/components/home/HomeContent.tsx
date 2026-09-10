@@ -7,7 +7,7 @@ import { useThemeStore } from '@/store/themeStore';
 
 export function HomeContent() {
   const theme = useThemeStore((s) => s.theme);
-  const logoSrc = theme === 'dark' ? '/logo-light.svg' : '/logo-dark.svg';
+  const logoSrc = theme === 'dark' ? '/logo-dark.svg' : '/logo-light.svg';
 
   return (
     <main className="min-h-screen flex flex-col relative overflow-hidden bg-[#F5F5F7] dark:bg-[#0A0A0F] transition-colors duration-500">
@@ -26,7 +26,16 @@ export function HomeContent() {
             animate={{ opacity: 1, x: 0 }}
             className="flex items-center gap-2.5"
           >
-            <img src={logoSrc} alt="Findr Logo" className="h-8 w-8 object-contain drop-shadow-md" />
+            <img
+              src={logoSrc}
+              alt="Findr Logo"
+              className="h-8 w-8 object-contain rounded-full"
+              style={{
+                filter: theme === 'dark'
+                  ? 'drop-shadow(0 0 8px rgba(255,255,255,0.5)) drop-shadow(0 0 20px rgba(255,255,255,0.25))'
+                  : 'drop-shadow(0 0 8px rgba(0,0,0,0.3)) drop-shadow(0 0 20px rgba(0,0,0,0.15))',
+              }}
+            />
             <span className="font-bold text-gray-900 dark:text-white tracking-tight text-lg">Findr</span>
           </motion.div>
           <motion.div
