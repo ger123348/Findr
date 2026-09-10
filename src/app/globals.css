@@ -30,10 +30,16 @@
 .textLayer mark.findr-highlight {
   color: transparent;
   border-radius: 3px;
-  padding: 1px 2px;
+  padding: 2px 1px;
   cursor: text;
-  opacity: 0.45;
-  mix-blend-mode: multiply;
+  opacity: 0.55;
+}
+
+/* Give more vivid colors to the text layer highlights */
+.textLayer mark.findr-highlight[style] {
+  display: inline;
+  position: relative;
+  z-index: 1;
 }
 
 /* ===== Custom Scrollbar ===== */

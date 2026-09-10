@@ -1,5 +1,26 @@
 import { KeywordItem } from '@/types';
 
+// More vivid/saturated highlight colors for better visibility on PDF
+const VIVID_HIGHLIGHT_COLORS: Record<string, string> = {};
+
+function getVividBgColor(keyword: KeywordItem): string {
+  // Use a more saturated/vivid version of the keyword's bg color for PDF highlights
+  // These are bolder, stabilo-like colors
+  const vividMap: Record<string, string> = {
+    '#FFD6D6': '#FF9999', // red → brighter red
+    '#D6EAFF': '#99CCFF', // blue → brighter blue
+    '#D6FFE4': '#99FFB3', // green → brighter green
+    '#FFF3D6': '#FFE066', // yellow → brighter yellow
+    '#F0D6FF': '#D699FF', // purple → brighter purple
+    '#FFE6D6': '#FFB380', // orange → brighter orange
+    '#D6FDFF': '#80F0F5', // teal → brighter teal
+    '#FFD6F5': '#FF99E6', // pink → brighter pink
+    '#E8FFD6': '#CCFF99', // lime → brighter lime
+    '#D6D6FF': '#9999FF', // indigo → brighter indigo
+  };
+  return vividMap[keyword.color] || keyword.color;
+}
+
 /**
  * Injects highlight <mark> elements into the PDF.js text layer for a given page.
  * PDF.js renders a text layer as a set of <span> elements. This utility wraps
@@ -28,12 +49,13 @@ export function highlightTextLayer(
     keywords.forEach((kw) => {
       const escaped = escapeRegex(kw.text);
       const regex = new RegExp(`(${escaped})`, 'gi');
+      const vividBg = getVividBgColor(kw);
       html = html.replace(
         regex,
         `<mark 
           class="findr-highlight" 
           data-keyword-id="${kw.id}" 
-          style="background-color:${kw.color};color:${kw.textColor};border-radius:2px;padding:0 1px;"
+          style="background-color:${vividBg};"
         >$1</mark>`
       );
     });
