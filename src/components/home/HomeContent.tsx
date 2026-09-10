@@ -7,7 +7,7 @@ import { useThemeStore } from '@/store/themeStore';
 
 export function HomeContent() {
   const theme = useThemeStore((s) => s.theme);
-  const logoSrc = theme === 'dark' ? '/logo-dark.svg' : '/logo-light.svg';
+  const logoSrc = theme === 'dark' ? '/logo-light.svg' : '/logo-dark.svg';
 
   return (
     <main className="min-h-screen flex flex-col relative overflow-hidden bg-[#F5F5F7] dark:bg-[#0A0A0F] transition-colors duration-500">

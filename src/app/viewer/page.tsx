@@ -16,7 +16,7 @@ export default function ViewerPage() {
   const router = useRouter();
   const { documentUrl, documentName, keywords } = useDocumentStore();
   const theme = useThemeStore((s) => s.theme);
-  const logoSrc = theme === 'dark' ? '/logo-dark.svg' : '/logo-light.svg';
+  const logoSrc = theme === 'dark' ? '/logo-light.svg' : '/logo-dark.svg';
 
   // Redirect to home if no document is loaded
   useEffect(() => {
