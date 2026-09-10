@@ -1,81 +1,148 @@
 import { KeywordItem } from '@/types';
 
-// More vivid/saturated highlight colors for better visibility on PDF
-const VIVID_HIGHLIGHT_COLORS: Record<string, string> = {};
+// Vivid stabilo-like colors for PDF highlights (brighter than badge colors)
+const VIVID_MAP: Record<string, string> = {
+  '#FFD6D6': '#FF9999',
+  '#D6EAFF': '#99CCFF',
+  '#D6FFE4': '#99FFB3',
+  '#FFF3D6': '#FFE066',
+  '#F0D6FF': '#D699FF',
+  '#FFE6D6': '#FFB380',
+  '#D6FDFF': '#80F0F5',
+  '#FFD6F5': '#FF99E6',
+  '#E8FFD6': '#CCFF99',
+  '#D6D6FF': '#9999FF',
+};
 
-function getVividBgColor(keyword: KeywordItem): string {
-  // Use a more saturated/vivid version of the keyword's bg color for PDF highlights
-  // These are bolder, stabilo-like colors
-  const vividMap: Record<string, string> = {
-    '#FFD6D6': '#FF9999', // red → brighter red
-    '#D6EAFF': '#99CCFF', // blue → brighter blue
-    '#D6FFE4': '#99FFB3', // green → brighter green
-    '#FFF3D6': '#FFE066', // yellow → brighter yellow
-    '#F0D6FF': '#D699FF', // purple → brighter purple
-    '#FFE6D6': '#FFB380', // orange → brighter orange
-    '#D6FDFF': '#80F0F5', // teal → brighter teal
-    '#FFD6F5': '#FF99E6', // pink → brighter pink
-    '#E8FFD6': '#CCFF99', // lime → brighter lime
-    '#D6D6FF': '#9999FF', // indigo → brighter indigo
-  };
-  return vividMap[keyword.color] || keyword.color;
+function getVividColor(keyword: KeywordItem): string {
+  return VIVID_MAP[keyword.color] || keyword.color;
 }
 
 /**
- * Injects highlight <mark> elements into the PDF.js text layer for a given page.
- * PDF.js renders a text layer as a set of <span> elements. This utility wraps
- * matching text segments in <mark> elements with the keyword's assigned color.
- *
- * @param textLayerDiv - The DOM element of the PDF.js text layer (div.textLayer)
- * @param keywords - The active list of keywords to highlight
+ * Injects highlight <mark> elements into the PDF.js text layer.
+ * Uses TreeWalker to find text nodes for more reliable highlighting.
  */
 export function highlightTextLayer(
   textLayerDiv: HTMLElement,
   keywords: KeywordItem[]
 ): void {
-  // First, reset any previous highlights by restoring original text nodes
   resetHighlights(textLayerDiv);
-
   if (keywords.length === 0) return;
 
-  // Collect all text-bearing span elements inside the text layer
-  const spans = Array.from(textLayerDiv.querySelectorAll('span'));
+  // Build a combined regex for all keywords
+  const patterns = keywords.map((kw) => ({
+    regex: new RegExp(escapeRegex(kw.text), 'gi'),
+    keyword: kw,
+  }));
 
-  spans.forEach((span) => {
-    // Work on the raw inner HTML to allow regex replacement
-    let html = span.innerHTML;
+  // Walk through all text nodes in the text layer
+  const walker = document.createTreeWalker(
+    textLayerDiv,
+    NodeFilter.SHOW_TEXT,
+    null
+  );
 
-    // Apply each keyword's highlight pattern
-    keywords.forEach((kw) => {
-      const escaped = escapeRegex(kw.text);
-      const regex = new RegExp(`(${escaped})`, 'gi');
-      const vividBg = getVividBgColor(kw);
-      html = html.replace(
-        regex,
-        `<mark 
-          class="findr-highlight" 
-          data-keyword-id="${kw.id}" 
-          style="background-color:${vividBg};"
-        >$1</mark>`
-      );
+  const textNodes: Text[] = [];
+  let node: Text | null;
+  while ((node = walker.nextNode() as Text | null)) {
+    if (node.textContent && node.textContent.trim().length > 0) {
+      textNodes.push(node);
+    }
+  }
+
+  // Process each text node
+  textNodes.forEach((textNode) => {
+    const text = textNode.textContent || '';
+    
+    // Check if any keyword matches
+    let hasMatch = false;
+    for (const p of patterns) {
+      p.regex.lastIndex = 0;
+      if (p.regex.test(text)) {
+        hasMatch = true;
+        break;
+      }
+    }
+    if (!hasMatch) return;
+
+    // Create a document fragment with highlighted parts
+    const fragment = document.createDocumentFragment();
+    let lastIndex = 0;
+
+    // Find ALL matches across all keywords, sorted by position
+    interface MatchInfo {
+      start: number;
+      end: number;
+      keyword: KeywordItem;
+    }
+    const allMatches: MatchInfo[] = [];
+
+    patterns.forEach((p) => {
+      p.regex.lastIndex = 0;
+      let match;
+      while ((match = p.regex.exec(text)) !== null) {
+        allMatches.push({
+          start: match.index,
+          end: match.index + match[0].length,
+          keyword: p.keyword,
+        });
+      }
     });
 
-    span.innerHTML = html;
+    // Sort by position
+    allMatches.sort((a, b) => a.start - b.start);
+
+    // Remove overlaps (keep earlier match)
+    const filtered: MatchInfo[] = [];
+    let lastEnd = 0;
+    for (const m of allMatches) {
+      if (m.start >= lastEnd) {
+        filtered.push(m);
+        lastEnd = m.end;
+      }
+    }
+
+    // Build fragment
+    filtered.forEach((m) => {
+      // Add text before this match
+      if (m.start > lastIndex) {
+        fragment.appendChild(document.createTextNode(text.slice(lastIndex, m.start)));
+      }
+
+      // Create highlight mark
+      const mark = document.createElement('mark');
+      mark.className = 'findr-highlight';
+      mark.dataset.keywordId = m.keyword.id;
+      mark.textContent = text.slice(m.start, m.end);
+
+      const vividColor = getVividColor(m.keyword);
+      mark.style.setProperty('background-color', vividColor, 'important');
+
+      fragment.appendChild(mark);
+      lastIndex = m.end;
+    });
+
+    // Add remaining text
+    if (lastIndex < text.length) {
+      fragment.appendChild(document.createTextNode(text.slice(lastIndex)));
+    }
+
+    // Replace the text node with the fragment
+    if (filtered.length > 0 && textNode.parentNode) {
+      textNode.parentNode.replaceChild(fragment, textNode);
+    }
   });
 }
 
 /**
- * Removes all injected <mark> elements from a text layer,
- * restoring the original text content.
+ * Removes all injected <mark> elements, restoring original text.
  */
 export function resetHighlights(textLayerDiv: HTMLElement): void {
   const marks = textLayerDiv.querySelectorAll('mark.findr-highlight');
   marks.forEach((mark) => {
     const parent = mark.parentNode;
     if (parent) {
-      // Replace mark with its text content
       parent.replaceChild(document.createTextNode(mark.textContent || ''), mark);
-      // Normalize merges adjacent text nodes
       parent.normalize();
     }
   });
@@ -89,7 +156,7 @@ function escapeRegex(text: string): string {
 }
 
 /**
- * Counts total occurrences of a keyword in a plain text string using case-insensitive regex.
+ * Counts total occurrences of a keyword in a plain text string.
  */
 export function countOccurrences(text: string, keyword: string): number {
   if (!keyword.trim()) return 0;

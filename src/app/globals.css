@@ -28,18 +28,19 @@
 
 /* Highlight marks injected by pdfHighlighter.ts */
 .textLayer mark.findr-highlight {
-  color: transparent;
-  border-radius: 3px;
-  padding: 2px 1px;
-  cursor: text;
-  opacity: 0.55;
+  color: transparent !important;
+  border-radius: 3px !important;
+  padding: 2px 1px !important;
+  cursor: text !important;
+  opacity: 0.7 !important;
+  display: inline !important;
+  position: relative !important;
+  z-index: 2 !important;
 }
 
-/* Give more vivid colors to the text layer highlights */
-.textLayer mark.findr-highlight[style] {
-  display: inline;
-  position: relative;
-  z-index: 1;
+/* Override Tailwind preflight mark reset */
+mark.findr-highlight[style] {
+  background-color: inherit !important;
 }
 
 /* ===== Custom Scrollbar ===== */
