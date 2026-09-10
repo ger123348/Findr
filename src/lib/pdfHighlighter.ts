@@ -1,8 +1,5 @@
 import { KeywordItem } from '@/types';
-
-function escapeRegex(text: string): string {
-  return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-}
+import Mark from 'mark.js';
 
 // Vivid stabilo colors (semi-transparent for overlay effect)
 const VIVID_MAP: Record<string, string> = {
@@ -23,37 +20,32 @@ function getHighlightColor(keyword: KeywordItem): string {
 }
 
 /**
- * Highlights keywords by replacing text inside spans with <mark> tags.
+ * Highlights keywords using Mark.js.
+ * This is the ultimate solution for PDF.js text layer because it perfectly handles
+ * cross-element boundaries (when a single word is split across multiple span elements).
  */
 export function highlightTextLayer(
   textLayerDiv: HTMLElement,
   keywords: KeywordItem[]
 ): void {
-  resetHighlights(textLayerDiv);
-  if (keywords.length === 0) return;
-
-  const spans = Array.from(textLayerDiv.querySelectorAll('span'));
-
-  spans.forEach((span) => {
-    let html = span.textContent || '';
-    let hasMatch = false;
-
-    keywords.forEach((kw) => {
-      const escaped = escapeRegex(kw.text);
-      const regex = new RegExp(`(${escaped})`, 'gi');
-      if (regex.test(html)) {
-        hasMatch = true;
-        const color = getHighlightColor(kw);
-        html = html.replace(
-          regex,
-          `<mark class="findr-highlight" data-keyword-id="${kw.id}" style="background-color: ${color} !important; border-radius: 2px !important; color: transparent !important; display: inline-block !important;">$1</mark>`
-        );
+  const instance = new Mark(textLayerDiv);
+  instance.unmark(); // Clear existing highlights first
+  
+  keywords.forEach((kw) => {
+    const color = getHighlightColor(kw);
+    instance.mark(kw.text, {
+      className: 'findr-highlight',
+      separateWordSearch: false, // Match the exact keyword phrase only
+      acrossElements: true,      // Handle words split across PDF.js spans
+      each: (elem) => {
+        // Apply inline !important styles to beat any Tailwind or PDF.js CSS resets
+        elem.style.setProperty('background-color', color, 'important');
+        elem.style.setProperty('border-radius', '2px', 'important');
+        // Keep text transparent so the underlying canvas text is visible
+        elem.style.setProperty('color', 'transparent', 'important');
+        elem.dataset.keywordId = kw.id;
       }
     });
-
-    if (hasMatch) {
-      span.innerHTML = html;
-    }
   });
 }
 
@@ -61,14 +53,8 @@ export function highlightTextLayer(
  * Removes all highlights from the text layer.
  */
 export function resetHighlights(textLayerDiv: HTMLElement): void {
-  const marks = Array.from(textLayerDiv.querySelectorAll('mark.findr-highlight'));
-  marks.forEach((mark) => {
-    const parent = mark.parentNode;
-    if (parent) {
-      parent.replaceChild(document.createTextNode(mark.textContent || ''), mark);
-      parent.normalize(); // merge adjacent text nodes
-    }
-  });
+  const instance = new Mark(textLayerDiv);
+  instance.unmark();
 }
 
 /**
@@ -76,7 +62,7 @@ export function resetHighlights(textLayerDiv: HTMLElement): void {
  */
 export function countOccurrences(text: string, keyword: string): number {
   if (!keyword.trim()) return 0;
-  const escaped = escapeRegex(keyword.trim());
+  const escaped = keyword.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   const regex = new RegExp(escaped, 'gi');
   return (text.match(regex) || []).length;
 }
