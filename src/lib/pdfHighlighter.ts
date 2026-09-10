@@ -33,16 +33,17 @@ export function highlightTextLayer(
       separateWordSearch: false,
       acrossElements: true,
       each: (elem) => {
+        const htmlElem = elem as HTMLElement;
         // EXTREMELY aggressive inline styles to force visibility
-        elem.style.setProperty('background-color', color, 'important');
-        elem.style.setProperty('border', '2px solid red', 'important');
-        elem.style.setProperty('box-shadow', '0 0 10px rgba(255,0,0,1)', 'important');
-        elem.style.setProperty('color', 'transparent', 'important');
-        elem.style.setProperty('display', 'inline', 'important');
-        elem.style.setProperty('position', 'relative', 'important');
-        elem.style.setProperty('z-index', '9999', 'important');
-        elem.style.setProperty('opacity', '1', 'important');
-        elem.dataset.keywordId = kw.id;
+        htmlElem.style.setProperty('background-color', color, 'important');
+        htmlElem.style.setProperty('border', '2px solid red', 'important');
+        htmlElem.style.setProperty('box-shadow', '0 0 10px rgba(255,0,0,1)', 'important');
+        htmlElem.style.setProperty('color', 'transparent', 'important');
+        htmlElem.style.setProperty('display', 'inline', 'important');
+        htmlElem.style.setProperty('position', 'relative', 'important');
+        htmlElem.style.setProperty('z-index', '9999', 'important');
+        htmlElem.style.setProperty('opacity', '1', 'important');
+        htmlElem.dataset.keywordId = kw.id;
       },
       done: (count) => {
         console.log(`Mark.js found ${count} matches for "${kw.text}"`);
