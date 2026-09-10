@@ -32,9 +32,7 @@ export default function HomePage() {
       <header className="sticky top-0 z-50 bg-white/70 backdrop-blur-xl border-b border-gray-200/60">
         <div className="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="h-7 w-7 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center">
-              <Search size={14} className="text-white" strokeWidth={2.5} />
-            </div>
+            <img src="/logo.svg" alt="Findr Logo" className="h-8 w-8 object-contain drop-shadow-sm" />
             <span className="font-bold text-gray-900 tracking-tight text-lg">Findr</span>
           </div>
           <span className="text-xs font-medium text-gray-400 bg-gray-100 px-3 py-1 rounded-full">

@@ -43,9 +43,7 @@ export default function ViewerPage() {
         <div className="h-14 px-6 flex items-center justify-between max-w-[1600px] mx-auto relative z-10">
           {/* Logo */}
           <div className="flex items-center gap-2">
-            <div className="h-7 w-7 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center">
-              <Search size={14} className="text-white" strokeWidth={2.5} />
-            </div>
+            <img src="/logo.svg" alt="Findr Logo" className="h-8 w-8 object-contain drop-shadow-sm" />
             <span className="font-bold text-gray-900 tracking-tight text-lg">Findr</span>
           </div>
 
