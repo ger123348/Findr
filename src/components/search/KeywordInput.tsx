@@ -34,11 +34,11 @@ export function KeywordInput() {
       <motion.div
         animate={{
           boxShadow: isFocused
-            ? '0 0 0 3px rgba(59,130,246,0.15), 0 4px 24px rgba(0,0,0,0.06)'
-            : '0 2px 8px rgba(0,0,0,0.05)',
+            ? '0 0 0 3px rgba(59,130,246,0.2), 0 8px 30px rgba(0,0,0,0.08)'
+            : '0 4px 20px rgba(0,0,0,0.03)',
         }}
         transition={{ duration: 0.2 }}
-        className="flex items-center gap-2 bg-white rounded-2xl px-4 py-3 border border-gray-200/80 cursor-text"
+        className="flex items-center gap-2 bg-white/50 backdrop-blur-md rounded-2xl px-4 py-3 border border-white/80 cursor-text transition-colors hover:bg-white/70"
         onClick={() => inputRef.current?.focus()}
       >
         <Search

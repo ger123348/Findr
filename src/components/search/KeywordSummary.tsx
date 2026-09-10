@@ -19,10 +19,10 @@ export function KeywordSummary({ results, isLoading }: KeywordSummaryProps) {
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
-      className="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm"
+      className="bg-white/40 backdrop-blur-xl rounded-2xl border border-white/80 overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.04)]"
     >
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-gray-50">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-white/40">
         <div className="flex items-center gap-2">
           <TrendingUp size={14} className="text-gray-400" />
           <span className="text-xs font-semibold text-gray-600 uppercase tracking-wide">

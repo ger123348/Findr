@@ -79,16 +79,15 @@ export function DropZone() {
     if (isDragActive) return 'border-blue-400 bg-blue-50/60';
     if (uploadStatus === 'success') return 'border-green-400 bg-green-50/60';
     if (uploadStatus === 'error') return 'border-red-400 bg-red-50/60';
-    return 'border-gray-200 bg-white/70 hover:border-gray-400 hover:bg-white/90';
+    return 'border-white/60 bg-white/40 hover:border-white/80 hover:bg-white/50 shadow-[0_8px_30px_rgb(0,0,0,0.04)]';
   };
 
   return (
     <div
       {...getRootProps()}
-      className={`relative w-full max-w-xl cursor-pointer rounded-3xl border-2 border-dashed px-8 py-16 text-center transition-all duration-300 ${getBorderColor()} ${
+      className={`relative w-full max-w-xl cursor-pointer rounded-3xl border px-8 py-16 text-center transition-all duration-300 backdrop-blur-2xl ${getBorderColor()} ${
         isUploading ? 'cursor-not-allowed opacity-80' : ''
       }`}
-      style={{ backdropFilter: 'blur(12px)' }}
     >
       <input {...getInputProps()} />
 

@@ -43,18 +43,19 @@ export default function HomePage() {
         </div>
       </header>
 
-      {/* Hero Section */}
-      <section className="flex-1 flex flex-col items-center justify-center px-6 py-16 text-center">
-        {/* Badge */}
-        <div className="inline-flex items-center gap-1.5 bg-blue-50 text-blue-600 text-xs font-semibold px-3 py-1.5 rounded-full mb-6 border border-blue-100">
-          <Zap size={12} />
-          Lebih pintar dari Ctrl+F
-        </div>
+      {/* Ambient Background for Glassmorphism effect */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
+        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-blue-200/40 blur-[100px]" />
+        <div className="absolute top-[20%] right-[-5%] w-[35%] h-[35%] rounded-full bg-purple-200/40 blur-[100px]" />
+        <div className="absolute bottom-[-10%] left-[20%] w-[50%] h-[50%] rounded-full bg-indigo-100/40 blur-[120px]" />
+      </div>
 
+      {/* Hero Section */}
+      <section className="relative z-10 flex-1 flex flex-col items-center justify-center px-6 py-16 text-center">
         {/* Headline */}
         <h1 className="text-4xl sm:text-5xl font-bold text-gray-900 tracking-tight leading-tight mb-4 max-w-2xl">
           Temukan setiap kata{' '}
-          <span className="bg-gradient-to-r from-blue-500 to-indigo-600 bg-clip-text text-transparent">
+          <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
             sekaligus
           </span>
         </h1>
@@ -74,10 +75,10 @@ export default function HomePage() {
             return (
               <div
                 key={i}
-                className="bg-white rounded-2xl p-5 text-left shadow-sm border border-gray-100 hover:shadow-md transition-shadow duration-200"
+                className="bg-white/40 backdrop-blur-xl rounded-2xl p-5 text-left shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-white/80 hover:bg-white/50 transition-all duration-300"
               >
-                <div className="h-9 w-9 rounded-xl bg-gray-50 flex items-center justify-center mb-3">
-                  <Icon size={18} className="text-gray-500" />
+                <div className="h-9 w-9 rounded-xl bg-white/80 shadow-sm flex items-center justify-center mb-3">
+                  <Icon size={18} className="text-gray-600" />
                 </div>
                 <h3 className="font-semibold text-gray-800 text-sm mb-1">{f.title}</h3>
                 <p className="text-xs text-gray-500 leading-relaxed">{f.description}</p>

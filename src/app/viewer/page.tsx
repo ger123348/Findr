@@ -30,10 +30,17 @@ export default function ViewerPage() {
   if (!documentUrl) return null;
 
   return (
-    <div className="min-h-screen bg-[#F5F5F7] flex flex-col">
+    <div className="min-h-screen bg-[#F5F5F7] flex flex-col relative overflow-hidden">
+      {/* Ambient Background for Glassmorphism effect */}
+      <div className="fixed inset-0 pointer-events-none z-0">
+        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-blue-200/40 blur-[100px]" />
+        <div className="absolute top-[20%] right-[-5%] w-[35%] h-[35%] rounded-full bg-purple-200/40 blur-[100px]" />
+        <div className="absolute bottom-[-10%] left-[20%] w-[50%] h-[50%] rounded-full bg-indigo-100/40 blur-[120px]" />
+      </div>
+
       {/* App Header */}
-      <header className="sticky top-0 z-50 bg-white/70 backdrop-blur-xl border-b border-gray-200/60">
-        <div className="h-14 px-6 flex items-center justify-between max-w-[1600px] mx-auto">
+      <header className="sticky top-0 z-50 bg-white/60 backdrop-blur-2xl border-b border-gray-200/50">
+        <div className="h-14 px-6 flex items-center justify-between max-w-[1600px] mx-auto relative z-10">
           {/* Logo */}
           <div className="flex items-center gap-2">
             <div className="h-7 w-7 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center">
@@ -46,9 +53,9 @@ export default function ViewerPage() {
           <motion.div
             initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
-            className="flex items-center gap-2 bg-gray-100/80 px-3 py-1.5 rounded-full"
+            className="flex items-center gap-2 bg-white/50 backdrop-blur-md border border-white/80 shadow-sm px-3 py-1.5 rounded-full"
           >
-            <span className="text-xs font-medium text-gray-500 max-w-[240px] truncate">
+            <span className="text-xs font-medium text-gray-600 max-w-[240px] truncate">
               {documentName}
             </span>
           </motion.div>
@@ -58,7 +65,7 @@ export default function ViewerPage() {
             <motion.div
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="flex items-center gap-1.5 bg-blue-50 border border-blue-100 text-blue-600 text-xs font-semibold px-3 py-1 rounded-full"
+              className="flex items-center gap-1.5 bg-blue-50/80 backdrop-blur-md border border-blue-100/80 text-blue-600 text-xs font-semibold px-3 py-1 rounded-full shadow-sm"
             >
               <Search size={11} />
               {keywords.length} kata kunci aktif
@@ -68,13 +75,13 @@ export default function ViewerPage() {
       </header>
 
       {/* Split Layout Body */}
-      <main className="flex-1 flex gap-0 max-w-[1600px] mx-auto w-full px-4 py-4 overflow-hidden" style={{ height: 'calc(100vh - 56px)' }}>
+      <main className="relative z-10 flex-1 flex gap-0 max-w-[1600px] mx-auto w-full px-4 py-4 overflow-hidden" style={{ height: 'calc(100vh - 56px)' }}>
         {/* Left: PDF Viewer (70%) */}
         <motion.div
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.4 }}
-          className="flex-[7] min-w-0 overflow-hidden rounded-2xl mr-4"
+          className="flex-[7] min-w-0 overflow-hidden rounded-2xl mr-4 bg-white/40 backdrop-blur-xl border border-white/80 shadow-[0_8px_30px_rgb(0,0,0,0.04)]"
           style={{ height: '100%' }}
         >
           <PdfViewer pdfUrl={documentUrl} keywords={keywords} />
