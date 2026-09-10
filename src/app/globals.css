@@ -10,7 +10,7 @@
   overflow: hidden;
   opacity: 1;
   line-height: 1;
-  pointer-events: none;
+  pointer-events: all;
 }
 
 .textLayer span {
@@ -19,28 +19,12 @@
   white-space: pre;
   cursor: text;
   transform-origin: 0% 0%;
+  pointer-events: all;
 }
 
 .textLayer span::selection,
 .textLayer br::selection {
-  background: rgba(0, 0, 255, 0.3);
-}
-
-/* Highlight marks injected by pdfHighlighter.ts */
-.textLayer mark.findr-highlight {
-  color: transparent !important;
-  border-radius: 3px !important;
-  padding: 2px 1px !important;
-  cursor: text !important;
-  opacity: 0.7 !important;
-  display: inline !important;
-  position: relative !important;
-  z-index: 2 !important;
-}
-
-/* Override Tailwind preflight mark reset */
-mark.findr-highlight[style] {
-  background-color: inherit !important;
+  background: rgba(59, 130, 246, 0.35);
 }
 
 /* ===== Custom Scrollbar ===== */

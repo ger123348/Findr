@@ -1,166 +1,182 @@
 import { KeywordItem } from '@/types';
 
-// Vivid stabilo-like colors for PDF highlights (brighter than badge colors)
+/**
+ * Cross-span highlight engine using DOM Range + getClientRects.
+ * This correctly finds keywords even when they're split across
+ * multiple PDF.js text layer <span> elements.
+ */
+
+interface HighlightRect {
+  left: number;
+  top: number;
+  width: number;
+  height: number;
+  color: string;
+  keywordId: string;
+}
+
+interface MatchInfo {
+  start: number;
+  end: number;
+  keyword: KeywordItem;
+}
+
+// Vivid stabilo colors
 const VIVID_MAP: Record<string, string> = {
-  '#FFD6D6': '#FF9999',
-  '#D6EAFF': '#99CCFF',
-  '#D6FFE4': '#99FFB3',
-  '#FFF3D6': '#FFE066',
-  '#F0D6FF': '#D699FF',
-  '#FFE6D6': '#FFB380',
-  '#D6FDFF': '#80F0F5',
-  '#FFD6F5': '#FF99E6',
-  '#E8FFD6': '#CCFF99',
-  '#D6D6FF': '#9999FF',
+  '#FFD6D6': 'rgba(255, 100, 100, 0.4)',
+  '#D6EAFF': 'rgba(80, 160, 255, 0.4)',
+  '#D6FFE4': 'rgba(80, 220, 130, 0.4)',
+  '#FFF3D6': 'rgba(255, 210, 50, 0.45)',
+  '#F0D6FF': 'rgba(180, 100, 255, 0.4)',
+  '#FFE6D6': 'rgba(255, 150, 80, 0.4)',
+  '#D6FDFF': 'rgba(80, 220, 230, 0.4)',
+  '#FFD6F5': 'rgba(255, 100, 200, 0.4)',
+  '#E8FFD6': 'rgba(160, 230, 80, 0.4)',
+  '#D6D6FF': 'rgba(120, 120, 255, 0.4)',
 };
 
-function getVividColor(keyword: KeywordItem): string {
-  return VIVID_MAP[keyword.color] || keyword.color;
+function getHighlightColor(keyword: KeywordItem): string {
+  return VIVID_MAP[keyword.color] || 'rgba(255, 255, 0, 0.4)';
 }
 
 /**
- * Injects highlight <mark> elements into the PDF.js text layer.
- * Uses TreeWalker to find text nodes for more reliable highlighting.
+ * Collects all text nodes in DOM order from a container.
  */
-export function highlightTextLayer(
-  textLayerDiv: HTMLElement,
-  keywords: KeywordItem[]
-): void {
-  resetHighlights(textLayerDiv);
-  if (keywords.length === 0) return;
-
-  // Build a combined regex for all keywords
-  const patterns = keywords.map((kw) => ({
-    regex: new RegExp(escapeRegex(kw.text), 'gi'),
-    keyword: kw,
-  }));
-
-  // Walk through all text nodes in the text layer
-  const walker = document.createTreeWalker(
-    textLayerDiv,
-    NodeFilter.SHOW_TEXT,
-    null
-  );
-
-  const textNodes: Text[] = [];
+function getAllTextNodes(container: HTMLElement): Text[] {
+  const nodes: Text[] = [];
+  const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT);
   let node: Text | null;
   while ((node = walker.nextNode() as Text | null)) {
-    if (node.textContent && node.textContent.trim().length > 0) {
-      textNodes.push(node);
+    if (node.textContent && node.textContent.length > 0) {
+      nodes.push(node);
+    }
+  }
+  return nodes;
+}
+
+/**
+ * Builds a character offset map from text nodes.
+ * Returns the concatenated full text and a function to resolve
+ * global offset → { textNode, localOffset }.
+ */
+function buildTextMap(textNodes: Text[]) {
+  let fullText = '';
+  const offsets: { node: Text; start: number; end: number }[] = [];
+
+  textNodes.forEach((node) => {
+    const text = node.textContent || '';
+    offsets.push({
+      node,
+      start: fullText.length,
+      end: fullText.length + text.length,
+    });
+    fullText += text;
+  });
+
+  function resolve(globalOffset: number): { node: Text; offset: number } | null {
+    for (const entry of offsets) {
+      if (globalOffset >= entry.start && globalOffset <= entry.end) {
+        return { node: entry.node, offset: globalOffset - entry.start };
+      }
+    }
+    return null;
+  }
+
+  return { fullText, resolve };
+}
+
+/**
+ * Finds all keyword matches in the full text.
+ * Handles overlaps by keeping the first match.
+ */
+function findMatches(fullText: string, keywords: KeywordItem[]): MatchInfo[] {
+  const allMatches: MatchInfo[] = [];
+
+  keywords.forEach((kw) => {
+    const escaped = kw.text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const regex = new RegExp(escaped, 'gi');
+    let match;
+    while ((match = regex.exec(fullText)) !== null) {
+      allMatches.push({
+        start: match.index,
+        end: match.index + match[0].length,
+        keyword: kw,
+      });
+    }
+  });
+
+  // Sort by position
+  allMatches.sort((a, b) => a.start - b.start);
+
+  // Remove overlaps
+  const filtered: MatchInfo[] = [];
+  let lastEnd = 0;
+  for (const m of allMatches) {
+    if (m.start >= lastEnd) {
+      filtered.push(m);
+      lastEnd = m.end;
     }
   }
 
-  // Process each text node
-  textNodes.forEach((textNode) => {
-    const text = textNode.textContent || '';
-    
-    // Check if any keyword matches
-    let hasMatch = false;
-    for (const p of patterns) {
-      p.regex.lastIndex = 0;
-      if (p.regex.test(text)) {
-        hasMatch = true;
-        break;
-      }
-    }
-    if (!hasMatch) return;
+  return filtered;
+}
 
-    // Create a document fragment with highlighted parts
-    const fragment = document.createDocumentFragment();
-    let lastIndex = 0;
+/**
+ * Creates highlight overlay rectangles for keyword matches.
+ * Uses DOM Range + getClientRects for pixel-perfect positioning.
+ */
+export function computeHighlights(
+  textLayerDiv: HTMLElement,
+  keywords: KeywordItem[],
+  containerRect: DOMRect
+): HighlightRect[] {
+  if (keywords.length === 0) return [];
 
-    // Find ALL matches across all keywords, sorted by position
-    interface MatchInfo {
-      start: number;
-      end: number;
-      keyword: KeywordItem;
-    }
-    const allMatches: MatchInfo[] = [];
+  const textNodes = getAllTextNodes(textLayerDiv);
+  if (textNodes.length === 0) return [];
 
-    patterns.forEach((p) => {
-      p.regex.lastIndex = 0;
-      let match;
-      while ((match = p.regex.exec(text)) !== null) {
-        allMatches.push({
-          start: match.index,
-          end: match.index + match[0].length,
-          keyword: p.keyword,
+  const { fullText, resolve } = buildTextMap(textNodes);
+  const matches = findMatches(fullText, keywords);
+  const highlights: HighlightRect[] = [];
+
+  matches.forEach((match) => {
+    const startInfo = resolve(match.start);
+    const endInfo = resolve(match.end);
+    if (!startInfo || !endInfo) return;
+
+    try {
+      const range = document.createRange();
+      range.setStart(startInfo.node, Math.min(startInfo.offset, startInfo.node.length));
+      range.setEnd(endInfo.node, Math.min(endInfo.offset, endInfo.node.length));
+
+      const rects = range.getClientRects();
+      const color = getHighlightColor(match.keyword);
+
+      for (let i = 0; i < rects.length; i++) {
+        const rect = rects[i];
+        highlights.push({
+          left: rect.left - containerRect.left,
+          top: rect.top - containerRect.top,
+          width: rect.width,
+          height: rect.height,
+          color,
+          keywordId: match.keyword.id,
         });
       }
-    });
-
-    // Sort by position
-    allMatches.sort((a, b) => a.start - b.start);
-
-    // Remove overlaps (keep earlier match)
-    const filtered: MatchInfo[] = [];
-    let lastEnd = 0;
-    for (const m of allMatches) {
-      if (m.start >= lastEnd) {
-        filtered.push(m);
-        lastEnd = m.end;
-      }
-    }
-
-    // Build fragment
-    filtered.forEach((m) => {
-      // Add text before this match
-      if (m.start > lastIndex) {
-        fragment.appendChild(document.createTextNode(text.slice(lastIndex, m.start)));
-      }
-
-      // Create highlight mark
-      const mark = document.createElement('mark');
-      mark.className = 'findr-highlight';
-      mark.dataset.keywordId = m.keyword.id;
-      mark.textContent = text.slice(m.start, m.end);
-
-      const vividColor = getVividColor(m.keyword);
-      mark.style.setProperty('background-color', vividColor, 'important');
-
-      fragment.appendChild(mark);
-      lastIndex = m.end;
-    });
-
-    // Add remaining text
-    if (lastIndex < text.length) {
-      fragment.appendChild(document.createTextNode(text.slice(lastIndex)));
-    }
-
-    // Replace the text node with the fragment
-    if (filtered.length > 0 && textNode.parentNode) {
-      textNode.parentNode.replaceChild(fragment, textNode);
+    } catch {
+      // Skip invalid ranges
     }
   });
+
+  return highlights;
 }
 
 /**
- * Removes all injected <mark> elements, restoring original text.
- */
-export function resetHighlights(textLayerDiv: HTMLElement): void {
-  const marks = textLayerDiv.querySelectorAll('mark.findr-highlight');
-  marks.forEach((mark) => {
-    const parent = mark.parentNode;
-    if (parent) {
-      parent.replaceChild(document.createTextNode(mark.textContent || ''), mark);
-      parent.normalize();
-    }
-  });
-}
-
-/**
- * Escapes special regex characters in a keyword string.
- */
-function escapeRegex(text: string): string {
-  return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-}
-
-/**
- * Counts total occurrences of a keyword in a plain text string.
+ * Counts occurrences for the search results panel.
  */
 export function countOccurrences(text: string, keyword: string): number {
   if (!keyword.trim()) return 0;
-  const escaped = escapeRegex(keyword.trim());
+  const escaped = keyword.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   const regex = new RegExp(escaped, 'gi');
   return (text.match(regex) || []).length;
 }
