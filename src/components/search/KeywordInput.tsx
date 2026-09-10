@@ -34,16 +34,17 @@ export function KeywordInput() {
       <motion.div
         animate={{
           boxShadow: isFocused
-            ? '0 0 0 3px rgba(59,130,246,0.2), 0 8px 30px rgba(0,0,0,0.08)'
-            : '0 4px 20px rgba(0,0,0,0.03)',
+            ? '0 0 0 3px rgba(99,102,241,0.15), 0 8px 32px rgba(0,0,0,0.06)'
+            : '0 2px 12px rgba(0,0,0,0.02)',
         }}
         transition={{ duration: 0.2 }}
-        className="flex items-center gap-2 bg-white/50 backdrop-blur-md rounded-2xl px-4 py-3 border border-white/80 cursor-text transition-colors hover:bg-white/70"
+        className="flex items-center gap-2.5 glass-input rounded-2xl px-4 py-3.5 cursor-text transition-all hover:bg-white/70 dark:hover:bg-white/10"
         onClick={() => inputRef.current?.focus()}
       >
         <Search
-          size={16}
-          className={`shrink-0 transition-colors ${isFocused ? 'text-blue-500' : 'text-gray-400'}`}
+          size={17}
+          strokeWidth={2.5}
+          className={`shrink-0 transition-colors duration-200 ${isFocused ? 'text-indigo-500 dark:text-indigo-400' : 'text-gray-400 dark:text-gray-500'}`}
         />
         <input
           ref={inputRef}
@@ -54,25 +55,25 @@ export function KeywordInput() {
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
           placeholder="Ketik kata kunci, tekan Enter..."
-          className="flex-1 bg-transparent text-sm text-gray-800 placeholder:text-gray-400 outline-none min-w-0"
+          className="flex-1 bg-transparent text-sm font-medium text-gray-800 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 outline-none min-w-0"
           aria-label="Masukkan kata kunci pencarian"
           id="keyword-search-input"
         />
         {inputValue && (
           <button
             onClick={() => setInputValue('')}
-            className="shrink-0 text-gray-400 hover:text-gray-600 transition-colors"
+            className="shrink-0 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 transition-colors"
             aria-label="Hapus input"
           >
-            <X size={14} />
+            <X size={15} strokeWidth={2.5} />
           </button>
         )}
       </motion.div>
 
       {/* Helper text */}
-      <p className="text-xs text-gray-400 px-1">
-        Tekan <kbd className="bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded text-xs font-mono">Enter</kbd> untuk tambah tag ·{' '}
-        <kbd className="bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded text-xs font-mono">⌫</kbd> untuk hapus terakhir
+      <p className="text-xs text-gray-400 dark:text-gray-500 px-1">
+        Tekan <kbd className="bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-gray-300 px-1.5 py-0.5 rounded-md text-xs font-mono border border-gray-200/50 dark:border-white/10">Enter</kbd> untuk tambah ·{' '}
+        <kbd className="bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-gray-300 px-1.5 py-0.5 rounded-md text-xs font-mono border border-gray-200/50 dark:border-white/10">⌫</kbd> untuk hapus
       </p>
 
       {/* Keyword tag badges */}
@@ -108,7 +109,7 @@ function KeywordBadge({
       animate={{ opacity: 1, scale: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.7, y: -4 }}
       transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-      className="flex items-center gap-1.5 rounded-full pl-3 pr-2 py-1 text-xs font-semibold"
+      className="flex items-center gap-1.5 rounded-full pl-3 pr-2 py-1.5 text-xs font-bold shadow-sm"
       style={{ backgroundColor: keyword.color, color: keyword.textColor }}
     >
       <span>{keyword.text}</span>
@@ -118,7 +119,7 @@ function KeywordBadge({
         style={{ color: keyword.textColor }}
         aria-label={`Hapus kata kunci "${keyword.text}"`}
       >
-        <X size={10} strokeWidth={2.5} />
+        <X size={10} strokeWidth={3} />
       </button>
     </motion.div>
   );

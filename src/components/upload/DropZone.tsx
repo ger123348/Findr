@@ -75,19 +75,19 @@ export function DropZone() {
   });
 
   const getBorderColor = () => {
-    if (isDragReject) return 'border-red-400 bg-red-50/60';
-    if (isDragActive) return 'border-blue-400 bg-blue-50/60';
-    if (uploadStatus === 'success') return 'border-green-400 bg-green-50/60';
-    if (uploadStatus === 'error') return 'border-red-400 bg-red-50/60';
-    return 'border-white/60 bg-white/40 hover:border-white/80 hover:bg-white/50 shadow-[0_8px_30px_rgb(0,0,0,0.04)]';
+    if (isDragReject) return 'border-red-400 dark:border-red-500/50 bg-red-50/60 dark:bg-red-500/10';
+    if (isDragActive) return 'border-blue-400 dark:border-blue-500/50 bg-blue-50/60 dark:bg-blue-500/10';
+    if (uploadStatus === 'success') return 'border-green-400 dark:border-green-500/50 bg-green-50/60 dark:bg-green-500/10';
+    if (uploadStatus === 'error') return 'border-red-400 dark:border-red-500/50 bg-red-50/60 dark:bg-red-500/10';
+    return ''; // The base glass-card-hover will handle the idle state styling
   };
 
   return (
     <div
       {...getRootProps()}
-      className={`relative w-full max-w-xl cursor-pointer rounded-3xl border px-8 py-16 text-center transition-all duration-300 backdrop-blur-2xl ${getBorderColor()} ${
-        isUploading ? 'cursor-not-allowed opacity-80' : ''
-      }`}
+      className={`relative w-full max-w-xl mx-auto cursor-pointer rounded-[2rem] border-2 border-dashed px-6 py-12 sm:px-10 sm:py-16 text-center transition-all duration-300 glass-card glass-card-hover ${
+        getBorderColor() || 'border-transparent'
+      } ${isUploading ? 'cursor-not-allowed opacity-70 scale-[0.98]' : ''}`}
     >
       <input {...getInputProps()} />
 
@@ -96,13 +96,13 @@ export function DropZone() {
         {isUploading && uploadStatus === 'uploading' && (
           <motion.div
             key="uploading"
-            initial={{ opacity: 0, scale: 0.9 }}
+            initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.9 }}
-            className="flex flex-col items-center gap-4"
+            exit={{ opacity: 0, scale: 0.95 }}
+            className="flex flex-col items-center gap-5"
           >
-            <Spinner size={48} className="text-blue-500" />
-            <p className="text-base font-medium text-gray-600">Mengunggah dokumen...</p>
+            <Spinner size={48} className="text-blue-600 dark:text-blue-400" />
+            <p className="text-base font-medium text-gray-700 dark:text-gray-200">Mengunggah dokumen...</p>
           </motion.div>
         )}
 
@@ -114,8 +114,14 @@ export function DropZone() {
             animate={{ opacity: 1, scale: 1 }}
             className="flex flex-col items-center gap-4"
           >
-            <CheckCircle2 size={48} className="text-green-500" />
-            <p className="text-base font-medium text-green-700">Berhasil! Mengarahkan...</p>
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ type: "spring", stiffness: 300, damping: 20 }}
+            >
+               <CheckCircle2 size={56} className="text-green-500 dark:text-green-400 drop-shadow-sm" />
+            </motion.div>
+            <p className="text-lg font-semibold text-green-700 dark:text-green-300">Berhasil! Membuka dokumen...</p>
           </motion.div>
         )}
 
@@ -127,8 +133,8 @@ export function DropZone() {
             animate={{ opacity: 1, scale: 1 }}
             className="flex flex-col items-center gap-4"
           >
-            <AlertCircle size={48} className="text-red-400" />
-            <p className="text-base font-medium text-red-600">Upload gagal. Coba lagi.</p>
+            <AlertCircle size={48} className="text-red-500 dark:text-red-400" />
+            <p className="text-base font-medium text-red-600 dark:text-red-400">Upload gagal. Coba lagi.</p>
           </motion.div>
         )}
 
@@ -138,31 +144,35 @@ export function DropZone() {
             key="idle"
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="flex flex-col items-center gap-5"
+            className="flex flex-col items-center gap-6"
           >
             <motion.div
-              animate={isDragActive ? { scale: 1.15, rotate: -5 } : { scale: 1, rotate: 0 }}
+              animate={isDragActive ? { scale: 1.15, rotate: -5, y: -5 } : { scale: 1, rotate: 0, y: 0 }}
               transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-              className="flex h-20 w-20 items-center justify-center rounded-2xl bg-gray-100"
+              className="flex h-20 w-20 sm:h-24 sm:w-24 items-center justify-center rounded-[1.25rem] bg-gradient-to-b from-white to-gray-50 dark:from-white/10 dark:to-white/5 shadow-sm border border-gray-100 dark:border-white/10"
             >
               {isDragActive ? (
-                <FileText size={36} className="text-blue-500" />
+                <FileText size={40} className="text-blue-600 dark:text-blue-400" strokeWidth={1.5} />
               ) : (
-                <Upload size={36} className="text-gray-400" />
+                <Upload size={40} className="text-gray-400 dark:text-gray-300" strokeWidth={1.5} />
               )}
             </motion.div>
 
-            <div className="space-y-2">
-              <p className="text-lg font-semibold text-gray-800">
+            <div className="space-y-2.5">
+              <p className="text-lg sm:text-xl font-bold text-gray-800 dark:text-white tracking-tight">
                 {isDragActive ? 'Lepaskan file di sini' : 'Seret & Lepas PDF di sini'}
               </p>
-              <p className="text-sm text-gray-400">
+              <p className="text-sm text-gray-500 dark:text-gray-400">
                 atau{' '}
-                <span className="font-medium text-blue-500 underline underline-offset-2">
+                <span className="font-medium text-blue-600 dark:text-blue-400 underline underline-offset-4 hover:text-blue-700 dark:hover:text-blue-300 transition-colors">
                   pilih dari komputer
                 </span>
               </p>
-              <p className="text-xs text-gray-300 pt-1">Hanya PDF · Maks. 10 MB</p>
+              <div className="pt-2">
+                <span className="inline-flex items-center px-3 py-1 rounded-full bg-gray-100/50 dark:bg-white/5 border border-gray-200/50 dark:border-white/5 text-xs font-medium text-gray-500 dark:text-gray-400">
+                  Maks. 10 MB
+                </span>
+              </div>
             </div>
           </motion.div>
         )}

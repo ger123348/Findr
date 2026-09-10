@@ -5,8 +5,6 @@ import {
   useRef,
   useState,
   useCallback,
-  forwardRef,
-  useImperativeHandle,
 } from 'react';
 import { motion } from 'framer-motion';
 import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut, Layers } from 'lucide-react';
@@ -123,9 +121,9 @@ function PdfPage({
   }, [keywords, state.isRendering]);
 
   return (
-    <div className="relative shadow-md rounded-xl overflow-hidden bg-white">
+    <div className="relative shadow-lg rounded-xl sm:rounded-2xl overflow-hidden bg-white">
       {/* Page number badge */}
-      <div className="absolute top-3 left-3 z-20 bg-black/40 text-white text-xs font-medium px-2 py-0.5 rounded-full backdrop-blur-sm">
+      <div className="absolute top-3 left-3 z-20 bg-black/50 text-white text-[10px] font-bold px-2.5 py-1 rounded-full backdrop-blur-sm tabular-nums">
         {pageNumber}
       </div>
 
@@ -140,12 +138,12 @@ function PdfPage({
       {state.hasError && (
         <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-red-50 text-red-400 gap-2">
           <span className="text-2xl">⚠️</span>
-          <span className="text-sm">Halaman gagal dimuat</span>
+          <span className="text-sm font-medium">Halaman gagal dimuat</span>
         </div>
       )}
 
       {/* Canvas for visual render */}
-      <canvas ref={canvasRef} className="block" />
+      <canvas ref={canvasRef} className="block w-full h-auto" />
 
       {/* Text layer for highlight injection — positioned absolutely over canvas */}
       <div
@@ -210,7 +208,7 @@ export function PdfViewer({ pdfUrl, keywords }: PdfViewerProps) {
 
   if (loadError) {
     return (
-      <div className="flex h-full items-center justify-center text-red-500 flex-col gap-3">
+      <div className="flex h-full items-center justify-center text-red-500 dark:text-red-400 flex-col gap-3">
         <span className="text-3xl">⚠️</span>
         <p className="text-sm font-medium">{loadError}</p>
       </div>
@@ -220,52 +218,52 @@ export function PdfViewer({ pdfUrl, keywords }: PdfViewerProps) {
   return (
     <div className="flex flex-col h-full">
       {/* Toolbar */}
-      <div className="flex items-center justify-between px-4 py-2.5 bg-white/80 backdrop-blur-md border-b border-gray-100 rounded-t-2xl sticky top-0 z-30">
-        <div className="flex items-center gap-2 text-sm text-gray-500">
-          <Layers size={15} className="text-gray-400" />
-          <span>
-            {totalPages > 0 ? `${currentPage} / ${totalPages} halaman` : 'Memuat...'}
+      <div className="flex items-center justify-between px-3 sm:px-4 py-2.5 bg-white/60 dark:bg-white/5 backdrop-blur-md border-b border-gray-200/30 dark:border-white/5 rounded-t-2xl sm:rounded-t-3xl sticky top-0 z-30 shrink-0">
+        <div className="flex items-center gap-2 text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400">
+          <Layers size={15} className="text-gray-400 dark:text-gray-500" />
+          <span className="tabular-nums">
+            {totalPages > 0 ? `${currentPage} / ${totalPages}` : '...'}
           </span>
         </div>
 
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-0.5 sm:gap-1">
           {/* Page navigation */}
           <button
             onClick={() => scrollToPage(Math.max(1, currentPage - 1))}
             disabled={currentPage <= 1 || isLoading}
-            className="p-1.5 rounded-lg hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            className="p-1.5 sm:p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
             aria-label="Halaman sebelumnya"
           >
-            <ChevronLeft size={16} className="text-gray-600" />
+            <ChevronLeft size={16} className="text-gray-600 dark:text-gray-300" />
           </button>
           <button
             onClick={() => scrollToPage(Math.min(totalPages, currentPage + 1))}
             disabled={currentPage >= totalPages || isLoading}
-            className="p-1.5 rounded-lg hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            className="p-1.5 sm:p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
             aria-label="Halaman berikutnya"
           >
-            <ChevronRight size={16} className="text-gray-600" />
+            <ChevronRight size={16} className="text-gray-600 dark:text-gray-300" />
           </button>
 
-          <div className="w-px h-5 bg-gray-200 mx-1" />
+          <div className="w-px h-5 bg-gray-200/50 dark:bg-white/10 mx-1 hidden sm:block" />
 
           {/* Zoom controls */}
           <button
             onClick={handleZoomOut}
-            className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors"
+            className="p-1.5 sm:p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-white/10 transition-colors hidden sm:flex"
             aria-label="Perkecil"
           >
-            <ZoomOut size={16} className="text-gray-600" />
+            <ZoomOut size={16} className="text-gray-600 dark:text-gray-300" />
           </button>
-          <span className="text-xs font-medium text-gray-500 w-12 text-center">
+          <span className="text-xs font-bold text-gray-500 dark:text-gray-400 w-12 text-center tabular-nums hidden sm:block">
             {Math.round(scale * 100)}%
           </span>
           <button
             onClick={handleZoomIn}
-            className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors"
+            className="p-1.5 sm:p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-white/10 transition-colors hidden sm:flex"
             aria-label="Perbesar"
           >
-            <ZoomIn size={16} className="text-gray-600" />
+            <ZoomIn size={16} className="text-gray-600 dark:text-gray-300" />
           </button>
         </div>
       </div>
@@ -273,7 +271,7 @@ export function PdfViewer({ pdfUrl, keywords }: PdfViewerProps) {
       {/* Pages scroll container */}
       <div
         ref={scrollContainerRef}
-        className="flex-1 overflow-y-auto bg-[#F0F0F2] p-4 space-y-4 rounded-b-2xl"
+        className="flex-1 overflow-y-auto bg-gray-100/50 dark:bg-black/20 p-3 sm:p-4 space-y-4 rounded-b-2xl sm:rounded-b-3xl"
       >
         {isLoading ? (
           <PdfSkeletonLoader pages={3} />

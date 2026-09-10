@@ -18,44 +18,24 @@ export function SearchPanel({ results, isTextLoading }: SearchPanelProps) {
 
   return (
     <motion.aside
-      initial={{ opacity: 0, x: 24 }}
-      animate={{ opacity: 1, x: 0 }}
-      transition={{ duration: 0.4, delay: 0.15 }}
+      initial={{ opacity: 0, y: 24, scale: 0.98 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={{ duration: 0.5, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
       className="flex flex-col gap-4 h-full overflow-y-auto"
     >
-      {/* Document info card */}
-      <div className="bg-white/40 backdrop-blur-xl rounded-2xl border border-white/80 px-4 py-3 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
-        <div className="flex items-start gap-3">
-          <div className="p-2 bg-white/80 rounded-xl shrink-0 shadow-sm">
-            <FileText size={18} className="text-blue-600" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-0.5">
-              Dokumen Aktif
-            </p>
-            <p
-              className="text-sm font-semibold text-gray-800 truncate"
-              title={documentName || 'Dokumen'}
-            >
-              {documentName || 'Dokumen'}
-            </p>
-          </div>
-        </div>
-      </div>
-
       {/* Search input section */}
-      <div className="bg-white/30 backdrop-blur-xl rounded-2xl p-4 space-y-4 border border-white/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
+      <div className="glass-card rounded-[1.5rem] p-4 sm:p-5 space-y-4 shadow-sm shrink-0">
         <div className="flex items-center justify-between">
-          <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+          <h2 className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">
             Kata Kunci
           </h2>
           {keywords.length > 0 && (
             <button
               onClick={clearKeywords}
-              className="flex items-center gap-1 text-xs text-gray-400 hover:text-red-400 transition-colors"
+              className="flex items-center gap-1.5 text-xs font-semibold text-gray-400 hover:text-red-500 dark:text-gray-500 dark:hover:text-red-400 transition-colors"
               aria-label="Hapus semua kata kunci"
             >
-              <Trash2 size={12} />
+              <Trash2 size={13} strokeWidth={2.5} />
               Hapus semua
             </button>
           )}
@@ -72,13 +52,15 @@ export function SearchPanel({ results, isTextLoading }: SearchPanelProps) {
       <div className="flex-1" />
 
       {/* Footer: Back to home */}
-      <Link
-        href="/"
-        className="flex items-center justify-center gap-2 text-xs text-gray-400 hover:text-gray-600 transition-colors py-2"
-      >
-        <Home size={13} />
-        Unggah dokumen baru
-      </Link>
+      <div className="pt-2 pb-4 shrink-0">
+        <Link
+          href="/"
+          className="flex items-center justify-center gap-2 text-xs font-medium text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors py-2 px-4 rounded-full glass-card glass-card-hover mx-auto max-w-max"
+        >
+          <Home size={14} />
+          Unggah dokumen baru
+        </Link>
+      </div>
     </motion.aside>
   );
 }
