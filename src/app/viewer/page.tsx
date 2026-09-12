@@ -21,8 +21,8 @@ export default function ViewerPage() {
   const logoSrc = theme === 'dark' ? '/logo-dark.svg' : '/logo-light.svg';
   const pdfViewerRef = useRef<PdfViewerHandle>(null);
 
-  const handleNavigateToPage = useCallback((pageNum: number) => {
-    pdfViewerRef.current?.scrollToPage(pageNum);
+  const handleNavigateToPage = useCallback((pageNum: number, keywordId?: string, matchIndex?: number) => {
+    pdfViewerRef.current?.scrollToPage(pageNum, keywordId, matchIndex);
   }, []);
 
   // Redirect to home if no document is loaded

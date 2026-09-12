@@ -24,7 +24,7 @@ interface PdfViewerProps {
 }
 
 export interface PdfViewerHandle {
-  scrollToPage: (pageNum: number) => void;
+  scrollToPage: (pageNum: number, keywordId?: string, matchIndex?: number) => void;
 }
 
 // ─── Vivid highlight colors ──────────────────────────────────
@@ -98,6 +98,7 @@ function PdfPageWithHighlight({
               el.style.setProperty('border-radius', '3px', 'important');
               el.style.setProperty('padding', '2px 0', 'important');
               el.style.setProperty('mix-blend-mode', 'multiply', 'important');
+              el.dataset.keywordId = kw.id;
             },
           });
         });
@@ -140,9 +141,28 @@ export const PdfViewer = forwardRef<PdfViewerHandle, PdfViewerProps>(
       setTotalPages(numPages);
     };
 
-    const scrollToPage = useCallback((pageNum: number) => {
+    const scrollToPage = useCallback((pageNum: number, keywordId?: string, matchIndex?: number) => {
       const el = pageRefs.current.get(pageNum);
-      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      if (el) {
+        if (keywordId && matchIndex !== undefined) {
+          // Attempt to find the specific mark on this page
+          const marks = Array.from(el.querySelectorAll(`mark[data-keyword-id="${keywordId}"]`));
+          const targetMark = marks[matchIndex];
+          
+          if (targetMark) {
+            targetMark.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            // Add a temporary glow effect so the user sees exactly which word it is
+            (targetMark as HTMLElement).style.setProperty('box-shadow', '0 0 0 3px rgba(0, 122, 255, 0.8), 0 0 15px rgba(0, 122, 255, 0.5)', 'important');
+            setTimeout(() => {
+              (targetMark as HTMLElement).style.removeProperty('box-shadow');
+            }, 1500);
+          } else {
+            el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
+        } else {
+          el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }
       setCurrentPage(pageNum);
     }, []);
 

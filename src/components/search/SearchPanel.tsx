@@ -11,7 +11,7 @@ import { KeywordResult } from '@/types';
 interface SearchPanelProps {
   results: KeywordResult[];
   isTextLoading: boolean;
-  onNavigateToPage?: (pageNum: number) => void;
+  onNavigateToPage?: (pageNum: number, keywordId?: string, matchIndex?: number) => void;
 }
 
 export function SearchPanel({ results, isTextLoading, onNavigateToPage }: SearchPanelProps) {

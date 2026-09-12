@@ -8,7 +8,7 @@ import { KeywordResult } from '@/types';
 interface KeywordSummaryProps {
   results: KeywordResult[];
   isLoading: boolean;
-  onNavigateToPage?: (pageNum: number) => void;
+  onNavigateToPage?: (pageNum: number, keywordId?: string, matchIndex?: number) => void;
 }
 
 export function KeywordSummary({ results, isLoading, onNavigateToPage }: KeywordSummaryProps) {
@@ -122,7 +122,7 @@ export function KeywordSummary({ results, isLoading, onNavigateToPage }: Keyword
                                 {match.snippets?.map((snippet, idx) => (
                                   <button
                                     key={idx}
-                                    onClick={() => onNavigateToPage?.(match.pageIndex)}
+                                    onClick={() => onNavigateToPage?.(match.pageIndex, result.keyword.id, idx)}
                                     className="w-full text-left px-3 py-2.5 rounded-xl text-xs leading-relaxed bg-gray-50/80 dark:bg-white/5 hover:bg-gray-100 dark:hover:bg-white/10 transition-colors border border-gray-100/50 dark:border-white/5 group"
                                   >
                                     <span className="text-gray-500 dark:text-gray-400">{snippet.pre}</span>
