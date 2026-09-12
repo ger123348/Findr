@@ -129,6 +129,13 @@ export const PdfViewer = forwardRef<PdfViewerHandle, PdfViewerProps>(
     const [currentPage, setCurrentPage] = useState(1);
     const pageRefs = useRef<Map<number, HTMLDivElement>>(new Map());
 
+    useEffect(() => {
+      if (typeof window !== 'undefined') {
+        if (window.innerWidth < 640) setScale(0.65);
+        else if (window.innerWidth < 1024) setScale(1.0);
+      }
+    }, []);
+
     const onDocumentLoadSuccess = ({ numPages }: { numPages: number }) => {
       setTotalPages(numPages);
     };

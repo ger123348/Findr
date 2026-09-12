@@ -200,12 +200,18 @@ export function DropZone() {
 
             <div className="space-y-3">
               <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white tracking-tight">
-                {isDragActive ? 'Lepaskan file di sini' : 'Seret & Lepas PDF di sini'}
+                <span className="hidden sm:inline">{isDragActive ? 'Lepaskan file di sini' : 'Seret & Lepas PDF di sini'}</span>
+                <span className="inline sm:hidden">Pilih Dokumen PDF</span>
               </p>
               <p className="text-[15px] text-gray-500 dark:text-gray-400 font-medium">
-                atau{' '}
-                <span className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors cursor-pointer relative after:content-[''] after:absolute after:w-full after:h-[1px] after:bg-current after:bottom-[-2px] after:left-0 after:scale-x-0 hover:after:scale-x-100 after:origin-left after:transition-transform after:duration-300">
-                  pilih dari komputer
+                <span className="hidden sm:inline">
+                  atau{' '}
+                  <span className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors cursor-pointer relative after:content-[''] after:absolute after:w-full after:h-[1px] after:bg-current after:bottom-[-2px] after:left-0 after:scale-x-0 hover:after:scale-x-100 after:origin-left after:transition-transform after:duration-300">
+                    pilih dari komputer
+                  </span>
+                </span>
+                <span className="inline sm:hidden text-blue-600 dark:text-blue-400">
+                  Ketuk untuk mencari file
                 </span>
               </p>
               <div className="pt-3">

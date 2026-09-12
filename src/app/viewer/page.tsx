@@ -108,13 +108,13 @@ export default function ViewerPage() {
           initial={{ opacity: 0, scale: 0.98 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.4 }}
-          className="flex-1 md:flex-[7] min-w-0 overflow-hidden rounded-2xl sm:rounded-3xl glass-card flex flex-col"
+          className="flex-[55%] md:flex-[7] min-h-0 min-w-0 overflow-hidden rounded-2xl sm:rounded-3xl glass-card flex flex-col"
         >
           <PdfViewer ref={pdfViewerRef} pdfUrl={documentUrl} keywords={keywords} />
         </motion.div>
 
         {/* Bottom/Right: Search Panel */}
-        <div className="h-[320px] md:h-auto md:flex-[3] min-w-0 md:max-w-[400px] lg:max-w-[480px] shrink-0 flex flex-col">
+        <div className="flex-[45%] md:flex-[3] min-h-0 min-w-0 md:max-w-[400px] lg:max-w-[480px] shrink-0 flex flex-col">
           <SearchPanel results={searchResults} isTextLoading={isTextLoading} onNavigateToPage={handleNavigateToPage} />
         </div>
       </main>
