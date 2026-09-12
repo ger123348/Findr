@@ -14,22 +14,21 @@ interface KeywordSummaryProps {
 function PageMatchItem({ 
   match, 
   result, 
+  isExpanded,
+  onToggle,
   onNavigateToPage 
 }: { 
   match: SearchMatch; 
   result: KeywordResult; 
+  isExpanded: boolean;
+  onToggle: () => void;
   onNavigateToPage?: (pageNum: number, keywordId?: string, matchIndex?: number) => void 
 }) {
-  const [isExpanded, setIsExpanded] = useState(false);
-
   return (
     <div className="space-y-1">
       {/* Page Header as a clickable dropdown toggle */}
       <button 
-        onClick={() => {
-          setIsExpanded(!isExpanded);
-          onNavigateToPage?.(match.pageIndex);
-        }}
+        onClick={onToggle}
         className="w-full flex items-center justify-between px-2 py-2 rounded-lg hover:bg-gray-100/80 dark:hover:bg-white/5 transition-colors group"
       >
         <div className="flex items-center gap-1.5 text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider group-hover:text-gray-700 dark:group-hover:text-gray-200 transition-colors">
@@ -81,6 +80,7 @@ function PageMatchItem({
 
 export function KeywordSummary({ results, isLoading, onNavigateToPage }: KeywordSummaryProps) {
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [expandedPageIndex, setExpandedPageIndex] = useState<number | null>(null);
 
   if (results.length === 0 && !isLoading) return null;
 
@@ -122,7 +122,10 @@ export function KeywordSummary({ results, isLoading, onNavigateToPage }: Keyword
                 >
                   {/* Main row */}
                   <button
-                    onClick={() => setExpandedId(isExpanded ? null : result.keyword.id)}
+                    onClick={() => {
+                      setExpandedId(isExpanded ? null : result.keyword.id);
+                      setExpandedPageIndex(null);
+                    }}
                     className="flex items-center gap-3 px-4 sm:px-5 py-3.5 hover:bg-white/20 dark:hover:bg-white/3 transition-colors w-full text-left"
                   >
                     <div
@@ -182,6 +185,13 @@ export function KeywordSummary({ results, isLoading, onNavigateToPage }: Keyword
                               key={match.pageIndex}
                               match={match} 
                               result={result} 
+                              isExpanded={expandedPageIndex === match.pageIndex}
+                              onToggle={() => {
+                                setExpandedPageIndex(
+                                  expandedPageIndex === match.pageIndex ? null : match.pageIndex
+                                );
+                                onNavigateToPage?.(match.pageIndex);
+                              }}
                               onNavigateToPage={onNavigateToPage} 
                             />
                           ))}
