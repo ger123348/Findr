@@ -19,7 +19,7 @@ export function KeywordSummary({ results, isLoading, onNavigateToPage }: Keyword
   const totalOccurrences = results.reduce((sum, r) => sum + r.totalCount, 0);
 
   return (
-    <div className="glass-card rounded-[1.5rem] flex flex-col h-full overflow-hidden">
+    <div className="glass-card rounded-[1.5rem] flex flex-col md:h-full md:overflow-hidden h-auto">
       {/* Header — fixed */}
       <div className="flex items-center justify-between px-4 sm:px-5 py-3 border-b border-gray-200/30 dark:border-white/5 shrink-0">
         <div className="flex items-center gap-2">
@@ -35,8 +35,8 @@ export function KeywordSummary({ results, isLoading, onNavigateToPage }: Keyword
         )}
       </div>
 
-      {/* Results list — scrollable */}
-      <div className="flex-1 overflow-y-auto min-h-0">
+      {/* Results list — scrollable on desktop, naturally grows on mobile */}
+      <div className="md:flex-1 md:overflow-y-auto md:min-h-0 h-auto">
         <div className="divide-y divide-gray-100/50 dark:divide-white/5">
           <AnimatePresence>
             {results.map((result, i) => {

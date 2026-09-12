@@ -22,7 +22,7 @@ export function SearchPanel({ results, isTextLoading, onNavigateToPage }: Search
       initial={{ opacity: 0, y: 24, scale: 0.98 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={{ duration: 0.5, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
-      className="flex flex-col gap-3 h-full min-h-0"
+      className="flex flex-col gap-3 md:h-full md:min-h-0"
     >
       {/* Search input section — fixed, never scrolls */}
       <div className="glass-card rounded-[1.5rem] p-4 sm:p-5 space-y-4 shadow-sm shrink-0">
@@ -46,7 +46,7 @@ export function SearchPanel({ results, isTextLoading, onNavigateToPage }: Search
 
       {/* Summary / results section — takes remaining space, scrollable internally */}
       {keywords.length > 0 && (
-        <div className="flex-1 min-h-0 overflow-hidden">
+        <div className="md:flex-1 md:min-h-0 md:overflow-hidden h-auto">
           <KeywordSummary results={results} isLoading={isTextLoading} onNavigateToPage={onNavigateToPage} />
         </div>
       )}

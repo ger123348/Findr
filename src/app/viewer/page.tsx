@@ -101,20 +101,20 @@ export default function ViewerPage() {
       </header>
 
       {/* Split Layout Body */}
-      <main className="relative z-10 flex-1 flex flex-col md:flex-row gap-3 sm:gap-4 max-w-[1800px] mx-auto w-full px-3 sm:px-4 py-3 sm:py-4 overflow-hidden h-[calc(100dvh-56px)]">
+      <main className="relative z-10 flex flex-col md:flex-row gap-3 sm:gap-4 max-w-[1800px] mx-auto w-full px-3 sm:px-4 py-3 sm:py-4 md:overflow-hidden md:h-[calc(100dvh-56px)] pb-10">
         
         {/* Top/Left: PDF Viewer */}
         <motion.div
           initial={{ opacity: 0, scale: 0.98 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.4 }}
-          className="flex-[55%] md:flex-[7] min-h-0 min-w-0 overflow-hidden rounded-2xl sm:rounded-3xl glass-card flex flex-col"
+          className="h-[60vh] shrink-0 md:h-auto md:flex-[7] md:min-h-0 md:min-w-0 md:overflow-hidden rounded-2xl sm:rounded-3xl glass-card flex flex-col"
         >
           <PdfViewer ref={pdfViewerRef} pdfUrl={documentUrl} keywords={keywords} />
         </motion.div>
 
         {/* Bottom/Right: Search Panel */}
-        <div className="flex-[45%] md:flex-[3] min-h-0 min-w-0 md:max-w-[400px] lg:max-w-[480px] shrink-0 flex flex-col">
+        <div className="h-auto md:flex-[3] md:min-h-0 md:min-w-0 md:max-w-[400px] lg:max-w-[480px] shrink-0 flex flex-col">
           <SearchPanel results={searchResults} isTextLoading={isTextLoading} onNavigateToPage={handleNavigateToPage} />
         </div>
       </main>
