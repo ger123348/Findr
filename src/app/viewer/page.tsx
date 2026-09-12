@@ -114,7 +114,7 @@ export default function ViewerPage() {
         </motion.div>
 
         {/* Bottom/Right: Search Panel */}
-        <div className="h-[280px] md:h-full md:flex-[3] min-w-0 md:max-w-[400px] lg:max-w-[480px] overflow-hidden shrink-0">
+        <div className="h-[320px] md:h-auto md:flex-[3] min-w-0 md:max-w-[400px] lg:max-w-[480px] shrink-0 flex flex-col">
           <SearchPanel results={searchResults} isTextLoading={isTextLoading} onNavigateToPage={handleNavigateToPage} />
         </div>
       </main>
