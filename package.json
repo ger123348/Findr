@@ -10,7 +10,6 @@
     "postinstall": "node -e \"const fs=require('fs');const src='node_modules/pdfjs-dist/build/pdf.worker.min.mjs';const dest='public/pdf.worker.min.mjs';if(fs.existsSync(src)){fs.copyFileSync(src,dest);console.log('PDF.js worker copied to /public');}else{console.warn('pdf.worker.min.mjs not found');}\" "
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.116.0",
     "framer-motion": "^13.2.0",
     "lucide-react": "^1.43.0",
     "mark.js": "^8.11.1",

@@ -7,24 +7,23 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Upload, FileText, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { toast } from '@/components/ui/Toast';
 import { Spinner } from '@/components/ui/Spinner';
-import { uploadPdf } from '@/lib/uploadPdf';
 import { useDocumentStore } from '@/store/documentStore';
 
-const MAX_SIZE_BYTES = 10 * 1024 * 1024; // 10 MB
+const MAX_SIZE_BYTES = 50 * 1024 * 1024; // 50 MB - we can afford larger since it's local
 
 export function DropZone() {
   const router = useRouter();
   const setDocument = useDocumentStore((s) => s.setDocument);
-  const [isUploading, setIsUploading] = useState(false);
-  const [uploadStatus, setUploadStatus] = useState<'idle' | 'uploading' | 'success' | 'error'>('idle');
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [status, setStatus] = useState<'idle' | 'processing' | 'success' | 'error'>('idle');
 
   const onDrop = useCallback(
     async (acceptedFiles: File[], rejectedFiles: FileRejection[]) => {
-      // Handle rejected files (from react-dropzone built-in validation)
+      // Handle rejected files
       if (rejectedFiles.length > 0) {
         const err = rejectedFiles[0].errors[0];
         if (err.code === 'file-too-large') {
-          toast.error('File terlalu besar. Maksimum ukuran adalah 10 MB.');
+          toast.error('File terlalu besar. Maksimum ukuran adalah 50 MB.');
         } else if (err.code === 'file-invalid-type') {
           toast.error('Hanya file PDF yang diizinkan.');
         } else {
@@ -43,24 +42,26 @@ export function DropZone() {
         return;
       }
 
-      setIsUploading(true);
-      setUploadStatus('uploading');
+      setIsProcessing(true);
+      setStatus('processing');
 
       try {
-        const result = await uploadPdf(file);
-        setDocument(result.file_url, result.file_name);
-        setUploadStatus('success');
-        toast.success(`"${result.file_name}" berhasil diunggah!`);
+        // Create a local blob URL for the file. This stays completely in the browser's memory!
+        const localUrl = URL.createObjectURL(file);
+        
+        setDocument(localUrl, file.name);
+        setStatus('success');
+        toast.success(`"${file.name}" berhasil dibuka!`);
 
         // Short delay to show success state before redirect
-        await new Promise((r) => setTimeout(r, 800));
+        await new Promise((r) => setTimeout(r, 600));
         router.push('/viewer');
       } catch (err) {
-        const message = err instanceof Error ? err.message : 'Gagal mengunggah file.';
+        const message = err instanceof Error ? err.message : 'Gagal memproses file.';
         toast.error(message);
-        setUploadStatus('error');
-        setIsUploading(false);
-        setTimeout(() => setUploadStatus('idle'), 2000);
+        setStatus('error');
+        setIsProcessing(false);
+        setTimeout(() => setStatus('idle'), 2000);
       }
     },
     [router, setDocument]
@@ -71,14 +72,14 @@ export function DropZone() {
     accept: { 'application/pdf': ['.pdf'] },
     maxSize: MAX_SIZE_BYTES,
     multiple: false,
-    disabled: isUploading,
+    disabled: isProcessing,
   });
 
   const getBorderColor = () => {
     if (isDragReject) return 'border-red-400 dark:border-red-500/50 bg-red-50/60 dark:bg-red-500/10';
     if (isDragActive) return 'border-blue-400 dark:border-blue-500/50 bg-blue-50/60 dark:bg-blue-500/10';
-    if (uploadStatus === 'success') return 'border-green-400 dark:border-green-500/50 bg-green-50/60 dark:bg-green-500/10';
-    if (uploadStatus === 'error') return 'border-red-400 dark:border-red-500/50 bg-red-50/60 dark:bg-red-500/10';
+    if (status === 'success') return 'border-green-400 dark:border-green-500/50 bg-green-50/60 dark:bg-green-500/10';
+    if (status === 'error') return 'border-red-400 dark:border-red-500/50 bg-red-50/60 dark:bg-red-500/10';
     return ''; // The base glass-card-hover will handle the idle state styling
   };
 
@@ -87,27 +88,27 @@ export function DropZone() {
       {...getRootProps()}
       className={`relative w-full max-w-xl mx-auto cursor-pointer rounded-[2rem] border-2 border-dashed px-6 py-12 sm:px-10 sm:py-16 text-center transition-all duration-300 glass-card glass-card-hover ${
         getBorderColor() || 'border-transparent'
-      } ${isUploading ? 'cursor-not-allowed opacity-70 scale-[0.98]' : ''}`}
+      } ${isProcessing ? 'cursor-not-allowed opacity-70 scale-[0.98]' : ''}`}
     >
       <input {...getInputProps()} />
 
       <AnimatePresence mode="wait">
-        {/* Uploading state */}
-        {isUploading && uploadStatus === 'uploading' && (
+        {/* Processing state */}
+        {isProcessing && status === 'processing' && (
           <motion.div
-            key="uploading"
+            key="processing"
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
             className="flex flex-col items-center gap-5"
           >
             <Spinner size={48} className="text-blue-600 dark:text-blue-400" />
-            <p className="text-base font-medium text-gray-700 dark:text-gray-200">Mengunggah dokumen...</p>
+            <p className="text-base font-medium text-gray-700 dark:text-gray-200">Menyiapkan dokumen lokal...</p>
           </motion.div>
         )}
 
         {/* Success state */}
-        {uploadStatus === 'success' && (
+        {status === 'success' && (
           <motion.div
             key="success"
             initial={{ opacity: 0, scale: 0.9 }}
@@ -126,7 +127,7 @@ export function DropZone() {
         )}
 
         {/* Error state */}
-        {uploadStatus === 'error' && !isUploading && (
+        {status === 'error' && !isProcessing && (
           <motion.div
             key="error"
             initial={{ opacity: 0, scale: 0.9 }}
@@ -134,12 +135,12 @@ export function DropZone() {
             className="flex flex-col items-center gap-4"
           >
             <AlertCircle size={48} className="text-red-500 dark:text-red-400" />
-            <p className="text-base font-medium text-red-600 dark:text-red-400">Upload gagal. Coba lagi.</p>
+            <p className="text-base font-medium text-red-600 dark:text-red-400">Gagal membuka file. Coba lagi.</p>
           </motion.div>
         )}
 
         {/* Idle / drag state */}
-        {uploadStatus === 'idle' && (
+        {status === 'idle' && (
           <motion.div
             key="idle"
             initial={{ opacity: 0, y: 10 }}
@@ -170,7 +171,7 @@ export function DropZone() {
               </p>
               <div className="pt-2">
                 <span className="inline-flex items-center px-3 py-1 rounded-full bg-gray-100/50 dark:bg-white/5 border border-gray-200/50 dark:border-white/5 text-xs font-medium text-gray-500 dark:text-gray-400">
-                  Maks. 10 MB
+                  Maks. 50 MB
                 </span>
               </div>
             </div>
