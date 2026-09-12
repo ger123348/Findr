@@ -11,6 +11,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://findrr.onrender.com'),
   title: 'Findr — Multi-Keyword PDF Search',
   description:
     'Temukan kata kunci di dokumen PDF Anda secara instan dengan pencarian multi-keyword cerdas dan highlight visual yang akurat.',
@@ -18,8 +19,16 @@ export const metadata: Metadata = {
   authors: [{ name: 'Findr' }],
   openGraph: {
     title: 'Findr — Multi-Keyword PDF Search',
-    description: 'Cari banyak kata sekaligus di PDF, lebih cerdas dari Ctrl+F.',
+    description: 'Cari banyak kata sekaligus di PDF, lebih cerdas dari sekadar Ctrl+F. Temukan data dengan cepat!',
+    url: 'https://findrr.onrender.com',
+    siteName: 'Findr',
+    locale: 'id_ID',
     type: 'website',
+  },
+  twitter: {
+    card: 'summary',
+    title: 'Findr — Multi-Keyword PDF Search',
+    description: 'Pencarian multi-keyword cerdas untuk dokumen PDF Anda.',
   },
 };
 
