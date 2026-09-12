@@ -15,6 +15,11 @@ export interface DocumentRecord {
 export interface SearchMatch {
   pageIndex: number;
   count: number;
+  snippets?: {
+    pre: string;
+    match: string;
+    post: string;
+  }[];
 }
 
 export interface KeywordResult {

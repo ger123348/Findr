@@ -32,6 +32,21 @@ export default function ViewerPage() {
     }
   }, [documentUrl, router]);
 
+  // Prevent accidental refresh/close to avoid losing local blob data
+  useEffect(() => {
+    if (!documentUrl) return;
+
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      // Most modern browsers ignore the string, but it's required by the spec
+      e.returnValue = 'Dokumen Anda akan hilang jika memuat ulang halaman. Lanjutkan?';
+      return e.returnValue;
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [documentUrl]);
+
   // Extract text from PDF pages for keyword counting
   const { pages, isLoading: isTextLoading } = usePdfText(documentUrl);
 
