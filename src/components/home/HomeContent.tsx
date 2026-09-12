@@ -86,7 +86,7 @@ export function HomeContent() {
 
       {/* Footer */}
       <footer className="relative z-10 py-6 text-center text-xs text-gray-400 dark:text-gray-600">
-        Findr · Dokumen tetap aman di cloud Anda
+        Findr · Dokumen Anda aman diproses secara lokal
       </footer>
     </main>
   );
