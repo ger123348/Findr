@@ -49,13 +49,13 @@ export function HomeContent() {
       </header>
 
       {/* Hero Section */}
-      <section className="relative z-10 flex-1 flex flex-col items-center justify-center px-4 sm:px-6 py-12 sm:py-20 text-center">
+      <section className="relative z-10 flex-1 flex flex-col items-center justify-center px-4 sm:px-6 py-6 sm:py-10 text-center">
         {/* Headline */}
         <motion.h1
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-          className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 dark:text-white tracking-tight leading-[1.1] mb-5 max-w-3xl"
+          className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 dark:text-white tracking-tight leading-[1.1] mb-4 sm:mb-5 max-w-3xl"
         >
           Temukan setiap kata{' '}
           <span className="bg-gradient-to-r from-blue-600 via-indigo-500 to-violet-600 dark:from-blue-400 dark:via-indigo-400 dark:to-violet-400 bg-clip-text text-transparent">
@@ -67,7 +67,7 @@ export function HomeContent() {
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
-          className="text-gray-500 dark:text-gray-400 text-sm sm:text-base md:text-lg max-w-md mb-10 sm:mb-14 leading-relaxed"
+          className="text-gray-500 dark:text-gray-400 text-sm sm:text-base md:text-lg max-w-md mb-8 sm:mb-10 leading-relaxed"
         >
           Upload PDF, tambahkan kata kunci, dan lihat semua kecocokan ter-highlight otomatis
           dengan warna berbeda per kata.

@@ -97,7 +97,7 @@ export function DropZone() {
   return (
     <div
       {...getRootProps()}
-      className={`relative w-full max-w-xl mx-auto cursor-pointer rounded-[2.5rem] border-2 border-dashed px-6 py-14 sm:px-10 sm:py-16 text-center transition-all duration-500 ease-out glass-card ${getContainerStyle()} ${isProcessing ? 'cursor-not-allowed' : ''}`}
+      className={`relative w-full max-w-xl mx-auto cursor-pointer rounded-[2.5rem] border-2 border-dashed px-6 py-10 sm:px-10 sm:py-12 text-center transition-all duration-500 ease-out glass-card ${getContainerStyle()} ${isProcessing ? 'cursor-not-allowed' : ''}`}
     >
       <input {...getInputProps()} />
 
