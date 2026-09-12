@@ -13,6 +13,9 @@ interface UsePdfTextResult {
 /**
  * Hook that loads a PDF from a URL using PDF.js and extracts
  * the full text content from every page.
+ * 
+ * Pages use 1-based indexing (pageIndex = 1, 2, 3, ...)
+ * to match PDF.js and react-pdf conventions.
  */
 export function usePdfText(pdfUrl: string | null): UsePdfTextResult {
   const [pages, setPages] = useState<PdfPage[]>([]);
@@ -31,15 +34,11 @@ export function usePdfText(pdfUrl: string | null): UsePdfTextResult {
       setPages([]);
 
       try {
-        // Dynamically import pdfjs-dist to avoid SSR issues
         const pdfjsLib = await import('pdfjs-dist');
-
-        // Point worker to the public directory copy
         pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs';
 
         const loadingTask = pdfjsLib.getDocument({
           url: pdfUrl!,
-          // Enable CORS for Supabase Storage URLs
           withCredentials: false,
         });
 
@@ -57,7 +56,8 @@ export function usePdfText(pdfUrl: string | null): UsePdfTextResult {
             .map((item) => ('str' in item ? item.str : ''))
             .join(' ');
 
-          extractedPages.push({ pageIndex: i - 1, text });
+          // Use 1-based page indexing to match PDF.js / react-pdf
+          extractedPages.push({ pageIndex: i, text });
         }
 
         if (!cancelled) {

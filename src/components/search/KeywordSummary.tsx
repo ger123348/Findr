@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Hash, TrendingUp, ChevronDown, FileText } from 'lucide-react';
+import { Hash, TrendingUp, ChevronDown, ChevronUp, FileText } from 'lucide-react';
 import { KeywordResult } from '@/types';
 
 interface KeywordSummaryProps {
@@ -14,6 +14,46 @@ interface KeywordSummaryProps {
 export function KeywordSummary({ results, isLoading, onNavigateToPage }: KeywordSummaryProps) {
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
+  // ── Ctrl+F style match-by-match navigation ──────────────────
+  // Build a flat list of all individual match locations: { pageNum, keywordId }
+  const allMatches: { pageNum: number; keywordId: string }[] = [];
+  results.forEach((result) => {
+    result.matches
+      .filter((m) => m.count > 0)
+      .forEach((m) => {
+        // Each occurrence on the page counts as one navigable match
+        for (let i = 0; i < m.count; i++) {
+          allMatches.push({ pageNum: m.pageIndex, keywordId: result.keyword.id });
+        }
+      });
+  });
+
+  const [currentMatchIdx, setCurrentMatchIdx] = useState(-1);
+
+  // Reset match index when results change
+  useEffect(() => {
+    setCurrentMatchIdx(-1);
+  }, [results.length]);
+
+  const navigateToMatch = useCallback(
+    (idx: number) => {
+      if (allMatches.length === 0) return;
+      // Wrap around
+      let target = idx;
+      if (target >= allMatches.length) target = 0;
+      if (target < 0) target = allMatches.length - 1;
+
+      setCurrentMatchIdx(target);
+      const match = allMatches[target];
+      onNavigateToPage?.(match.pageNum);
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [allMatches.length, onNavigateToPage]
+  );
+
+  const goNext = () => navigateToMatch(currentMatchIdx + 1);
+  const goPrev = () => navigateToMatch(currentMatchIdx - 1);
+
   if (results.length === 0 && !isLoading) return null;
 
   const totalOccurrences = results.reduce((sum, r) => sum + r.totalCount, 0);
@@ -23,25 +63,52 @@ export function KeywordSummary({ results, isLoading, onNavigateToPage }: Keyword
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
-      className="glass-card rounded-[1.5rem] overflow-hidden"
+      className="glass-card rounded-[1.5rem] flex flex-col overflow-hidden min-h-0"
     >
-      {/* Header */}
-      <div className="flex items-center justify-between px-4 sm:px-5 py-3.5 border-b border-gray-200/30 dark:border-white/5">
+      {/* Header + Navigation arrows */}
+      <div className="flex items-center justify-between px-4 sm:px-5 py-3 border-b border-gray-200/30 dark:border-white/5 shrink-0">
         <div className="flex items-center gap-2">
           <TrendingUp size={14} className="text-gray-400 dark:text-gray-500" />
           <span className="text-xs font-bold text-gray-600 dark:text-gray-300 uppercase tracking-widest">
             Rekap
           </span>
         </div>
-        {totalOccurrences > 0 && (
-          <span className="text-xs font-bold text-gray-400 dark:text-gray-500 tabular-nums">
-            {totalOccurrences} total
-          </span>
-        )}
+
+        <div className="flex items-center gap-1.5">
+          {/* Match counter */}
+          {totalOccurrences > 0 && (
+            <span className="text-[10px] font-bold text-gray-400 dark:text-gray-500 tabular-nums mr-1">
+              {currentMatchIdx >= 0 ? `${currentMatchIdx + 1} / ` : ''}
+              {totalOccurrences} total
+            </span>
+          )}
+
+          {/* Up/Down arrows (Ctrl+F style) */}
+          {totalOccurrences > 0 && (
+            <>
+              <button
+                onClick={goPrev}
+                className="p-1 rounded-lg hover:bg-gray-200/60 dark:hover:bg-white/10 transition-colors"
+                aria-label="Match sebelumnya"
+                title="Sebelumnya (↑)"
+              >
+                <ChevronUp size={14} className="text-gray-500 dark:text-gray-400" />
+              </button>
+              <button
+                onClick={goNext}
+                className="p-1 rounded-lg hover:bg-gray-200/60 dark:hover:bg-white/10 transition-colors"
+                aria-label="Match selanjutnya"
+                title="Selanjutnya (↓)"
+              >
+                <ChevronDown size={14} className="text-gray-500 dark:text-gray-400" />
+              </button>
+            </>
+          )}
+        </div>
       </div>
 
-      {/* Results list */}
-      <div className="divide-y divide-gray-100/50 dark:divide-white/5">
+      {/* Results list — SCROLLABLE */}
+      <div className="flex-1 overflow-y-auto min-h-0 divide-y divide-gray-100/50 dark:divide-white/5">
         <AnimatePresence>
           {results.map((result, i) => {
             const isExpanded = expandedId === result.keyword.id;
