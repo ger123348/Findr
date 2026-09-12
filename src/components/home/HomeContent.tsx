@@ -10,7 +10,7 @@ export function HomeContent() {
   const logoSrc = theme === 'dark' ? '/logo-dark.svg' : '/logo-light.svg';
 
   return (
-    <main className="min-h-screen flex flex-col relative overflow-hidden bg-[#F5F5F7] dark:bg-[#0A0A0F] transition-colors duration-500">
+    <main className="min-h-screen flex flex-col relative overflow-hidden bg-[#F5F5F7] dark:bg-[#0A0A0F] transition-colors duration-1000 ease-in-out">
       {/* Header / Nav */}
       <header className="glass-header sticky top-0 z-50">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
