@@ -3,12 +3,86 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Hash, TrendingUp, ChevronDown, FileText } from 'lucide-react';
-import { KeywordResult } from '@/types';
+import { KeywordResult, SearchMatch } from '@/types';
 
 interface KeywordSummaryProps {
   results: KeywordResult[];
   isLoading: boolean;
   onNavigateToPage?: (pageNum: number, keywordId?: string, matchIndex?: number) => void;
+}
+
+function PageMatchItem({ 
+  match, 
+  result, 
+  onNavigateToPage 
+}: { 
+  match: SearchMatch; 
+  result: KeywordResult; 
+  onNavigateToPage?: (pageNum: number, keywordId?: string, matchIndex?: number) => void 
+}) {
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  return (
+    <div className="space-y-1">
+      {/* Page Header as a clickable dropdown toggle */}
+      <button 
+        onClick={() => setIsExpanded(!isExpanded)}
+        className="w-full flex items-center justify-between px-2 py-2 rounded-lg hover:bg-gray-100/80 dark:hover:bg-white/5 transition-colors group"
+      >
+        <div className="flex items-center gap-1.5 text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider group-hover:text-gray-700 dark:group-hover:text-gray-200 transition-colors">
+          <FileText size={12} /> Halaman {match.pageIndex}
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-[11px] font-bold text-gray-400 dark:text-gray-500">{match.count} kata</span>
+          <ChevronDown 
+            size={14} 
+            className={`text-gray-400 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`} 
+          />
+        </div>
+      </button>
+      
+      {/* Collapsible Snippets List */}
+      <AnimatePresence>
+        {isExpanded && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="overflow-hidden"
+          >
+            <div className="space-y-1.5 pt-1 pb-2 pl-2 pr-1 border-l-2 border-gray-100 dark:border-white/5 ml-3">
+              {match.snippets?.map((snippet, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => onNavigateToPage?.(match.pageIndex, result.keyword.id, idx)}
+                  className="w-full text-left px-3 py-2.5 rounded-xl text-xs leading-relaxed bg-gray-50/80 dark:bg-white/5 hover:bg-gray-100 dark:hover:bg-white/10 transition-colors border border-gray-100/50 dark:border-white/5 group"
+                >
+                  <span className="text-gray-500 dark:text-gray-400">{snippet.pre}</span>
+                  <span 
+                    className="font-bold mx-0.5 px-0.5 rounded-[3px] shadow-sm"
+                    style={{ backgroundColor: result.keyword.color, color: result.keyword.textColor }}
+                  >
+                    {snippet.match}
+                  </span>
+                  <span className="text-gray-500 dark:text-gray-400">{snippet.post}</span>
+                </button>
+              ))}
+              
+              {match.count > (match.snippets?.length || 0) && (
+                <button 
+                  onClick={() => onNavigateToPage?.(match.pageIndex)}
+                  className="w-full text-center py-1.5 text-[11px] font-semibold text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 transition-colors"
+                >
+                  + {match.count - (match.snippets?.length || 0)} kata lainnya (lompat ke halaman)
+                </button>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
 }
 
 export function KeywordSummary({ results, isLoading, onNavigateToPage }: KeywordSummaryProps) {
@@ -108,44 +182,14 @@ export function KeywordSummary({ results, isLoading, onNavigateToPage }: Keyword
                         transition={{ duration: 0.25 }}
                         className="overflow-hidden"
                       >
-                        <div className="px-4 sm:px-5 pb-4 pt-1 space-y-4">
+                        <div className="px-4 sm:px-5 pb-4 pt-1 space-y-2">
                           {pagesWithMatches.map((match) => (
-                            <div key={match.pageIndex} className="space-y-2">
-                              <div className="flex items-center justify-between px-1 text-[11px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
-                                <span className="flex items-center gap-1.5">
-                                  <FileText size={12} /> Halaman {match.pageIndex}
-                                </span>
-                                <span>{match.count} kata</span>
-                              </div>
-                              
-                              <div className="space-y-1.5">
-                                {match.snippets?.map((snippet, idx) => (
-                                  <button
-                                    key={idx}
-                                    onClick={() => onNavigateToPage?.(match.pageIndex, result.keyword.id, idx)}
-                                    className="w-full text-left px-3 py-2.5 rounded-xl text-xs leading-relaxed bg-gray-50/80 dark:bg-white/5 hover:bg-gray-100 dark:hover:bg-white/10 transition-colors border border-gray-100/50 dark:border-white/5 group"
-                                  >
-                                    <span className="text-gray-500 dark:text-gray-400">{snippet.pre}</span>
-                                    <span 
-                                      className="font-bold mx-0.5 px-0.5 rounded-[3px] shadow-sm"
-                                      style={{ backgroundColor: result.keyword.color, color: result.keyword.textColor }}
-                                    >
-                                      {snippet.match}
-                                    </span>
-                                    <span className="text-gray-500 dark:text-gray-400">{snippet.post}</span>
-                                  </button>
-                                ))}
-                                
-                                {match.count > (match.snippets?.length || 0) && (
-                                  <button 
-                                    onClick={() => onNavigateToPage?.(match.pageIndex)}
-                                    className="w-full text-center py-1.5 text-[11px] font-semibold text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 transition-colors"
-                                  >
-                                    + {match.count - (match.snippets?.length || 0)} kata lainnya...
-                                  </button>
-                                )}
-                              </div>
-                            </div>
+                            <PageMatchItem 
+                              key={match.pageIndex}
+                              match={match} 
+                              result={result} 
+                              onNavigateToPage={onNavigateToPage} 
+                            />
                           ))}
                         </div>
                       </motion.div>
