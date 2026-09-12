@@ -26,7 +26,10 @@ function PageMatchItem({
     <div className="space-y-1">
       {/* Page Header as a clickable dropdown toggle */}
       <button 
-        onClick={() => setIsExpanded(!isExpanded)}
+        onClick={() => {
+          setIsExpanded(!isExpanded);
+          onNavigateToPage?.(match.pageIndex);
+        }}
         className="w-full flex items-center justify-between px-2 py-2 rounded-lg hover:bg-gray-100/80 dark:hover:bg-white/5 transition-colors group"
       >
         <div className="flex items-center gap-1.5 text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider group-hover:text-gray-700 dark:group-hover:text-gray-200 transition-colors">
@@ -68,15 +71,6 @@ function PageMatchItem({
                   <span className="text-gray-500 dark:text-gray-400">{snippet.post}</span>
                 </button>
               ))}
-              
-              {match.count > (match.snippets?.length || 0) && (
-                <button 
-                  onClick={() => onNavigateToPage?.(match.pageIndex)}
-                  className="w-full text-center py-1.5 text-[11px] font-semibold text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 transition-colors"
-                >
-                  + {match.count - (match.snippets?.length || 0)} kata lainnya (lompat ke halaman)
-                </button>
-              )}
             </div>
           </motion.div>
         )}

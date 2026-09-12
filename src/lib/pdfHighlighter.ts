@@ -76,24 +76,22 @@ export function extractMatchesContext(text: string, keyword: string, contextLeng
   
   while ((match = regex.exec(text)) !== null) {
     count++;
-    // Limit to extracting the first 5 snippets per page to avoid memory/UI bloat
-    if (snippets.length < 5) {
-      const start = Math.max(0, match.index - contextLength);
-      const end = Math.min(text.length, match.index + match[0].length + contextLength);
-      
-      let pre = text.substring(start, match.index);
-      const matchText = match[0];
-      let post = text.substring(match.index + matchText.length, end);
-      
-      // Clean up whitespace and line breaks for snippets
-      pre = pre.replace(/\s+/g, ' ').replace(/^\S*\s/, ''); // remove chopped word at start
-      post = post.replace(/\s+/g, ' ').replace(/\s\S*$/, ''); // remove chopped word at end
-      
-      if (start > 0) pre = '...' + pre;
-      if (end < text.length) post = post + '...';
-      
-      snippets.push({ pre, match: matchText, post });
-    }
+    
+    const start = Math.max(0, match.index - contextLength);
+    const end = Math.min(text.length, match.index + match[0].length + contextLength);
+    
+    let pre = text.substring(start, match.index);
+    const matchText = match[0];
+    let post = text.substring(match.index + matchText.length, end);
+    
+    // Clean up whitespace and line breaks for snippets
+    pre = pre.replace(/\s+/g, ' ').replace(/^\S*\s/, ''); // remove chopped word at start
+    post = post.replace(/\s+/g, ' ').replace(/\s\S*$/, ''); // remove chopped word at end
+    
+    if (start > 0) pre = '...' + pre;
+    if (end < text.length) post = post + '...';
+    
+    snippets.push({ pre, match: matchText, post });
   }
   
   return { count, snippets };
