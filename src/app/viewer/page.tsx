@@ -41,7 +41,7 @@ export default function ViewerPage() {
   if (!documentUrl) return null;
 
   return (
-    <div className="min-h-[100dvh] h-[100dvh] bg-[#F5F5F7] dark:bg-[#0A0A0F] flex flex-col relative overflow-hidden transition-colors duration-500">
+    <div className="min-h-[100dvh] md:h-[100dvh] bg-[#F5F5F7] dark:bg-[#0A0A0F] flex flex-col relative md:overflow-hidden transition-colors duration-500">
       {/* Ambient Background Orbs */}
       <div className="fixed inset-0 pointer-events-none z-0">
         <div className="orb-float-1 absolute top-[-15%] left-[-10%] w-[45%] h-[45%] rounded-full bg-gradient-to-br from-blue-300/30 to-indigo-400/20 dark:from-blue-600/15 dark:to-indigo-800/10 blur-[120px]" />
