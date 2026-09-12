@@ -33,11 +33,21 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
   keywords: [],
   colorIndex: 0,
 
-  setDocument: (url, name) =>
-    set({ documentUrl: url, documentName: name, keywords: [], colorIndex: 0 }),
+  setDocument: (url, name) => {
+    const currentUrl = get().documentUrl;
+    if (currentUrl && currentUrl.startsWith('blob:')) {
+      URL.revokeObjectURL(currentUrl);
+    }
+    set({ documentUrl: url, documentName: name, keywords: [], colorIndex: 0 });
+  },
 
-  clearDocument: () =>
-    set({ documentUrl: null, documentName: null, keywords: [], colorIndex: 0 }),
+  clearDocument: () => {
+    const currentUrl = get().documentUrl;
+    if (currentUrl && currentUrl.startsWith('blob:')) {
+      URL.revokeObjectURL(currentUrl);
+    }
+    set({ documentUrl: null, documentName: null, keywords: [], colorIndex: 0 });
+  },
 
   addKeyword: (text: string) => {
     const trimmed = text.trim();

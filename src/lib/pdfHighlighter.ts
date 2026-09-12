@@ -1,52 +1,41 @@
 import { KeywordItem } from '@/types';
 import Mark from 'mark.js';
 
-const VIVID_MAP: Record<string, string> = {
-  '#FFD6D6': 'rgba(255, 0, 0, 0.7)',
-  '#D6EAFF': 'rgba(0, 0, 255, 0.7)',
-  '#D6FFE4': 'rgba(0, 255, 0, 0.7)',
-  '#FFF3D6': 'rgba(255, 255, 0, 0.7)',
-  '#F0D6FF': 'rgba(255, 0, 255, 0.7)',
-  '#FFE6D6': 'rgba(255, 128, 0, 0.7)',
-  '#D6FDFF': 'rgba(0, 255, 255, 0.7)',
-  '#FFD6F5': 'rgba(255, 0, 128, 0.7)',
-  '#E8FFD6': 'rgba(128, 255, 0, 0.7)',
-  '#D6D6FF': 'rgba(128, 0, 255, 0.7)',
-};
-
-function getHighlightColor(keyword: KeywordItem): string {
-  return VIVID_MAP[keyword.color] || 'rgba(255, 255, 0, 0.8)';
+function hexToRgba(hex: string, alpha: number): string {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
 
 export function highlightTextLayer(
   textLayerDiv: HTMLElement,
   keywords: KeywordItem[]
 ): void {
-  console.log('Running highlightTextLayer with keywords:', keywords.map(k => k.text));
   const instance = new Mark(textLayerDiv);
   instance.unmark(); 
   
   keywords.forEach((kw) => {
-    const color = getHighlightColor(kw);
+    // Use the keyword's assigned pastel color, but with 50% opacity
+    // so the text underneath is clearly legible, and add a crisp border.
+    const bgColor = hexToRgba(kw.color, 0.5);
+    const borderColor = hexToRgba(kw.textColor, 0.3);
+
     instance.mark(kw.text, {
       className: 'findr-highlight',
       separateWordSearch: false,
       acrossElements: true,
       each: (elem) => {
         const htmlElem = elem as HTMLElement;
-        // EXTREMELY aggressive inline styles to force visibility
-        htmlElem.style.setProperty('background-color', color, 'important');
-        htmlElem.style.setProperty('border', '2px solid red', 'important');
-        htmlElem.style.setProperty('box-shadow', '0 0 10px rgba(255,0,0,1)', 'important');
+        htmlElem.style.setProperty('background-color', bgColor, 'important');
+        htmlElem.style.setProperty('border-radius', '4px', 'important');
+        htmlElem.style.setProperty('box-shadow', `0 0 0 1px ${borderColor}`, 'important');
+        
+        // Critical for PDF.js text layer: keep the actual mark text transparent
+        // so it doesn't double-draw over the canvas text.
         htmlElem.style.setProperty('color', 'transparent', 'important');
         htmlElem.style.setProperty('display', 'inline', 'important');
-        htmlElem.style.setProperty('position', 'relative', 'important');
-        htmlElem.style.setProperty('z-index', '9999', 'important');
-        htmlElem.style.setProperty('opacity', '1', 'important');
         htmlElem.dataset.keywordId = kw.id;
-      },
-      done: (count) => {
-        console.log(`Mark.js found ${count} matches for "${kw.text}"`);
       }
     });
   });
@@ -58,8 +47,16 @@ export function resetHighlights(textLayerDiv: HTMLElement): void {
 }
 
 export function countOccurrences(text: string, keyword: string): number {
-  if (!keyword.trim()) return 0;
-  const escaped = keyword.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const trimmed = keyword.trim();
+  if (!trimmed) return 0;
+  
+  // 1. Escape special regex characters
+  // 2. Replace literal spaces with \s+ so it matches any amount of spaces/newlines
+  // This matches mark.js default behavior (accuracy: "partially", ignoreJoiners: true)
+  const escaped = trimmed
+    .replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+    .replace(/\s+/g, '\\s+');
+    
   const regex = new RegExp(escaped, 'gi');
   return (text.match(regex) || []).length;
 }
