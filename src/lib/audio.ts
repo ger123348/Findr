@@ -2,15 +2,32 @@
 
 /**
  * Utility to play soft, Apple-like synthesized UI sounds
- * using the native Web Audio API (no external files needed).
+ * using the native Web Audio API.
  */
+
+// Singleton AudioContext to prevent exceeding hardware limits on rapid clicks
+let sharedContext: AudioContext | null = null;
+
+function getAudioContext() {
+  if (typeof window === 'undefined') return null;
+  if (!sharedContext) {
+    const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+    if (AudioContextClass) {
+      sharedContext = new AudioContextClass();
+    }
+  }
+  // Resume context if it was suspended by browser autoplay policies
+  if (sharedContext && sharedContext.state === 'suspended') {
+    sharedContext.resume().catch(() => {});
+  }
+  return sharedContext;
+}
 
 export function playSuccessSound() {
   try {
-    const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
-    if (!AudioContext) return;
+    const ctx = getAudioContext();
+    if (!ctx) return;
     
-    const ctx = new AudioContext();
     const now = ctx.currentTime;
 
     const playNote = (freq: number, startTime: number, duration: number) => {
@@ -20,9 +37,9 @@ export function playSuccessSound() {
       osc.type = 'sine';
       osc.frequency.setValueAtTime(freq, ctx.currentTime);
       
-      // Soft envelope
+      // Increased gain for better volume scaling across devices
       gain.gain.setValueAtTime(0, startTime);
-      gain.gain.linearRampToValueAtTime(0.2, startTime + 0.05);
+      gain.gain.linearRampToValueAtTime(0.8, startTime + 0.05);
       gain.gain.exponentialRampToValueAtTime(0.01, startTime + duration);
       
       osc.connect(gain);
@@ -42,10 +59,9 @@ export function playSuccessSound() {
 
 export function playErrorSound() {
   try {
-    const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
-    if (!AudioContext) return;
+    const ctx = getAudioContext();
+    if (!ctx) return;
 
-    const ctx = new AudioContext();
     const now = ctx.currentTime;
     
     const playNote = (freq: number, startTime: number, duration: number) => {
@@ -55,8 +71,9 @@ export function playErrorSound() {
       osc.type = 'triangle'; // slightly harsher tone
       osc.frequency.setValueAtTime(freq, ctx.currentTime);
       
+      // Increased gain
       gain.gain.setValueAtTime(0, startTime);
-      gain.gain.linearRampToValueAtTime(0.15, startTime + 0.05);
+      gain.gain.linearRampToValueAtTime(0.6, startTime + 0.05);
       gain.gain.exponentialRampToValueAtTime(0.01, startTime + duration);
       
       osc.connect(gain);
@@ -76,10 +93,9 @@ export function playErrorSound() {
 
 export function playWhooshSound() {
   try {
-    const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
-    if (!AudioContext) return;
+    const ctx = getAudioContext();
+    if (!ctx) return;
     
-    const ctx = new AudioContext();
     const now = ctx.currentTime;
     
     // Create white noise
@@ -101,10 +117,10 @@ export function playWhooshSound() {
     filter.frequency.exponentialRampToValueAtTime(1500, now + 0.15);
     filter.frequency.exponentialRampToValueAtTime(200, now + 0.4);
     
-    // Volume envelope (very soft)
+    // Increased volume envelope for whoosh
     const gain = ctx.createGain();
     gain.gain.setValueAtTime(0, now);
-    gain.gain.linearRampToValueAtTime(0.1, now + 0.1);
+    gain.gain.linearRampToValueAtTime(0.6, now + 0.1);
     gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
     
     noise.connect(filter);
