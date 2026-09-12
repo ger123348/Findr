@@ -52,13 +52,17 @@ export function SearchPanel({ results, isTextLoading, onNavigateToPage }: Search
       )}
 
       {/* Footer: Back to home — always at bottom */}
-      <div className="shrink-0">
-        <Link
-          href="/"
-          className="flex items-center justify-center gap-2 text-xs font-medium text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors py-2 px-4 rounded-full glass-card glass-card-hover mx-auto max-w-max"
-        >
-          <Home size={14} />
-          Unggah dokumen baru
+      <div className="shrink-0 flex justify-center">
+        <Link href="/" passHref legacyBehavior>
+          <motion.a
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.96 }}
+            transition={{ type: "spring", stiffness: 400, damping: 25 }}
+            className="flex items-center justify-center gap-2 text-xs font-medium text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors py-2.5 px-5 rounded-full glass-card glass-card-hover"
+          >
+            <Home size={14} />
+            Unggah dokumen baru
+          </motion.a>
         </Link>
       </div>
     </motion.aside>

@@ -11,13 +11,6 @@ export function HomeContent() {
 
   return (
     <main className="min-h-screen flex flex-col relative overflow-hidden bg-[#F5F5F7] dark:bg-[#0A0A0F] transition-colors duration-500">
-      {/* Ambient Background Orbs */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
-        <div className="orb-float-1 absolute top-[-15%] left-[-10%] w-[45%] h-[45%] rounded-full bg-gradient-to-br from-blue-300/30 to-indigo-400/20 dark:from-blue-600/15 dark:to-indigo-800/10 blur-[120px]" />
-        <div className="orb-float-2 absolute top-[15%] right-[-8%] w-[40%] h-[40%] rounded-full bg-gradient-to-br from-violet-300/25 to-purple-400/15 dark:from-violet-700/12 dark:to-purple-900/8 blur-[120px]" />
-        <div className="orb-float-3 absolute bottom-[-15%] left-[15%] w-[55%] h-[55%] rounded-full bg-gradient-to-br from-cyan-200/20 to-blue-300/15 dark:from-cyan-800/10 dark:to-blue-900/8 blur-[140px]" />
-      </div>
-
       {/* Header / Nav */}
       <header className="glass-header sticky top-0 z-50">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
@@ -55,11 +48,11 @@ export function HomeContent() {
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-          className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 dark:text-white tracking-tight leading-[1.1] mb-4 sm:mb-5 max-w-3xl"
+          className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 dark:text-white tracking-tight leading-[1.05] mb-4 sm:mb-5 max-w-3xl"
         >
           Temukan setiap kata{' '}
-          <span className="bg-gradient-to-r from-blue-600 via-indigo-500 to-violet-600 dark:from-blue-400 dark:via-indigo-400 dark:to-violet-400 bg-clip-text text-transparent">
-            sekaligus
+          <span className="text-blue-600 dark:text-blue-500">
+            sekaligus.
           </span>
         </motion.h1>
 
