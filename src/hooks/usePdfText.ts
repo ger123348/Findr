@@ -50,14 +50,20 @@ export function usePdfText(pdfUrl: string | null): UsePdfTextResult {
 
         for (let i = 1; i <= pdf.numPages; i++) {
           if (cancelled) return;
-          const page = await pdf.getPage(i);
-          const textContent = await page.getTextContent();
-          const text = textContent.items
-            .map((item) => ('str' in item ? item.str : ''))
-            .join(' ');
+          try {
+            const page = await pdf.getPage(i);
+            const textContent = await page.getTextContent();
+            const text = textContent.items
+              .map((item) => ('str' in item ? item.str : ''))
+              .join(' ');
 
-          // Use 1-based page indexing to match PDF.js / react-pdf
-          extractedPages.push({ pageIndex: i, text });
+            // Use 1-based page indexing to match PDF.js / react-pdf
+            extractedPages.push({ pageIndex: i, text });
+          } catch (pageErr) {
+            console.warn(`Failed to extract text from page ${i}:`, pageErr);
+            // Push empty text so the page index is still registered, but no matches will be found
+            extractedPages.push({ pageIndex: i, text: '' });
+          }
         }
 
         if (!cancelled) {
