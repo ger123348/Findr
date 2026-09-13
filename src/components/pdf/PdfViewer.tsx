@@ -122,6 +122,96 @@ function PdfPageWithHighlight({
   );
 }
 
+// ─── Lazy PDF Page Wrapper ────────────────────────────────────
+function LazyPdfPageWrapper({
+  pageNum,
+  scale,
+  keywords,
+  setCurrentPage,
+  pageRefs,
+}: {
+  pageNum: number;
+  scale: number;
+  keywords: KeywordItem[];
+  setCurrentPage: (n: number) => void;
+  pageRefs: React.MutableRefObject<Map<number, HTMLDivElement>>;
+}) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [inView, setInView] = useState(pageNum <= 3); 
+  const [pageHeight, setPageHeight] = useState<number>(842 * scale); // A4 default approx
+  const [pageWidth, setPageWidth] = useState<number>(595 * scale);
+
+  // Measure actual height/width when rendered to keep placeholders perfectly sized
+  useEffect(() => {
+    if (inView && containerRef.current) {
+      const resizeObserver = new ResizeObserver((entries) => {
+        for (let entry of entries) {
+          const child = entry.target.firstElementChild as HTMLElement;
+          if (child && child.offsetHeight > 100) {
+            setPageHeight(child.offsetHeight);
+            setPageWidth(child.offsetWidth);
+          }
+        }
+      });
+      resizeObserver.observe(containerRef.current);
+      return () => resizeObserver.disconnect();
+    }
+  }, [inView]);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setInView(true);
+            if (entry.intersectionRatio > 0.2) {
+              setCurrentPage(pageNum);
+            }
+          } else {
+            // Unmount page to save GPU/Canvas memory for massive PDFs
+            setInView(false);
+          }
+        });
+      },
+      { 
+        rootMargin: '1500px 0px', // Preload ~1.5 screens ahead/behind
+        threshold: [0, 0.2] 
+      }
+    );
+
+    observer.observe(el);
+    pageRefs.current.set(pageNum, el);
+    
+    return () => {
+      observer.disconnect();
+    };
+  }, [pageNum, setCurrentPage, pageRefs]);
+
+  return (
+    <div 
+      ref={containerRef} 
+      className="w-full flex justify-center"
+      style={{ minHeight: pageHeight }}
+    >
+      {inView ? (
+        <PdfPageWithHighlight
+          pageNumber={pageNum}
+          scale={scale}
+          keywords={keywords}
+        />
+      ) : (
+        <div 
+          className="mb-4 bg-gray-200/50 dark:bg-white/5 animate-pulse rounded-lg shadow-sm"
+          style={{ width: pageWidth, height: pageHeight - 16 /* account for mb-4 margin */ }}
+        />
+      )}
+    </div>
+  );
+}
+
 // ─── PDF Viewer Container ────────────────────────────────────
 export const PdfViewer = forwardRef<PdfViewerHandle, PdfViewerProps>(
   function PdfViewer({ pdfUrl, keywords }, ref) {
@@ -146,19 +236,28 @@ export const PdfViewer = forwardRef<PdfViewerHandle, PdfViewerProps>(
       if (el) {
         if (keywordId && matchIndex !== undefined) {
           // Attempt to find the specific mark on this page
-          const marks = Array.from(el.querySelectorAll(`mark[data-keyword-id="${keywordId}"]`));
-          const targetMark = marks[matchIndex];
+          // Since the page might be unmounted, scroll to the wrapper first to trigger render
+          el.scrollIntoView({ behavior: 'smooth', block: 'start' });
           
-          if (targetMark) {
-            targetMark.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            // Add a temporary glow effect so the user sees exactly which word it is
-            (targetMark as HTMLElement).style.setProperty('box-shadow', '0 0 0 3px rgba(0, 122, 255, 0.8), 0 0 15px rgba(0, 122, 255, 0.5)', 'important');
-            setTimeout(() => {
-              (targetMark as HTMLElement).style.removeProperty('box-shadow');
-            }, 1500);
-          } else {
-            el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-          }
+          // Poll for the mark to appear in the DOM (since rendering is async)
+          let attempts = 0;
+          const pollMark = setInterval(() => {
+            attempts++;
+            const marks = Array.from(el.querySelectorAll(`mark[data-keyword-id="${keywordId}"]`));
+            const targetMark = marks[matchIndex];
+            
+            if (targetMark) {
+              clearInterval(pollMark);
+              targetMark.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              // Add a temporary glow effect
+              (targetMark as HTMLElement).style.setProperty('box-shadow', '0 0 0 3px rgba(0, 122, 255, 0.8), 0 0 15px rgba(0, 122, 255, 0.5)', 'important');
+              setTimeout(() => {
+                (targetMark as HTMLElement).style.removeProperty('box-shadow');
+              }, 1500);
+            } else if (attempts > 20) { // Timeout after 2 seconds
+              clearInterval(pollMark);
+            }
+          }, 100);
         } else {
           el.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
@@ -228,17 +327,14 @@ export const PdfViewer = forwardRef<PdfViewerHandle, PdfViewerProps>(
             }
           >
             {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
-              <div
+              <LazyPdfPageWrapper
                 key={`page_${pageNum}`}
-                ref={(el) => { if (el) pageRefs.current.set(pageNum, el); }}
-                onMouseEnter={() => setCurrentPage(pageNum)}
-              >
-                <PdfPageWithHighlight
-                  pageNumber={pageNum}
-                  scale={scale}
-                  keywords={keywords}
-                />
-              </div>
+                pageNum={pageNum}
+                scale={scale}
+                keywords={keywords}
+                setCurrentPage={setCurrentPage}
+                pageRefs={pageRefs}
+              />
             ))}
           </Document>
         </div>
